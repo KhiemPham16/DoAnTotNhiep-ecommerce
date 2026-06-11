@@ -1,0 +1,200 @@
+.wrapper {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 40px 20px 80px;
+}
+
+.header {
+    margin-bottom: 24px;
+
+    h2 {
+        margin: 0 0 6px;
+        font-size: 1.6rem;
+    }
+
+    p {
+        margin: 0;
+        color: #6b7280;
+    }
+}
+
+.stateBox {
+    padding: 32px;
+    border-radius: 14px;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    text-align: center;
+    color: #6b7280;
+}
+
+.orders {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.orderCard {
+    padding: 20px;
+    border-radius: 16px;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.04);
+}
+
+.orderTop {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+
+    padding-bottom: 16px;
+    border-bottom: 1px solid #f1f5f9;
+
+    h3 {
+        margin: 0 0 6px;
+        font-size: 1.05rem;
+    }
+
+    span {
+        color: #6b7280;
+        font-size: 0.9rem;
+    }
+}
+
+.badges {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.badge,
+.paymentBadge {
+    padding: 6px 10px;
+    border-radius: 999px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.pending {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.confirmed {
+    background: #dbeafe;
+    color: #1d4ed8;
+}
+
+.shipping {
+    background: #cffafe;
+    color: #155e75;
+}
+
+.completed {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.cancelled {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+.paymentBadge {
+    background: #f3f4f6;
+    color: #374151;
+}
+
+.items {
+    padding: 16px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.item {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+
+    color: #374151;
+
+    strong {
+        color: #111827;
+    }
+}
+
+.more {
+    color: #6b7280;
+    font-size: 0.9rem;
+}
+
+.orderBottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+
+    padding-top: 16px;
+    border-top: 1px solid #f1f5f9;
+
+    > div:first-child {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+
+        span {
+            color: #6b7280;
+            font-size: 0.9rem;
+        }
+
+        strong {
+            color: #0b45b7;
+            font-size: 1.25rem;
+        }
+    }
+}
+
+.actions {
+    display: flex;
+    gap: 10px;
+
+    a,
+    button {
+        border: none;
+        border-radius: 9px;
+        padding: 10px 14px;
+        font-weight: 700;
+        cursor: pointer;
+        text-decoration: none;
+    }
+
+    a {
+        background: #0b45b7;
+        color: #fff;
+    }
+
+    button {
+        background: #fee2e2;
+        color: #b91c1c;
+    }
+
+    button:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+}
+
+@media (max-width: 768px) {
+    .orderTop,
+    .orderBottom {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .badges {
+        justify-content: flex-start;
+    }
+}

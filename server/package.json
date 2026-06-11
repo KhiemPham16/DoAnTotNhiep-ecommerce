@@ -1,0 +1,48 @@
+{
+    "name": "ecommerce-api",
+    "version": "1.0.0",
+    "description": "",
+    "license": "ISC",
+    "author": "DevChill",
+    "type": "commonjs",
+    "main": "./src/server.js",
+    "_moduleAliases": {
+        "~": "src"
+    },
+    "scripts": {
+        "start": "node src/server.js",
+        "dev": "cross-env NODE_ENV=development nodemon ./src/server.js",
+        "prisma:generate": "prisma generate",
+        "prisma:migrate": "prisma migrate dev",
+        "prisma:seed": "node prisma/seed.js"
+    },
+    "prisma": {
+        "seed": "node prisma/seed.js"
+    },
+    "dependencies": {
+        "@prisma/adapter-mariadb": "^7.8.0",
+        "@prisma/client": "^7.8.0",
+        "bcrypt": "^6.0.0",
+        "cookie-parser": "^1.4.7",
+        "cors": "^2.8.6",
+        "ejs": "^5.0.2",
+        "express": "^5.2.1",
+        "express-rate-limit": "^8.5.2",
+        "helmet": "^8.2.0",
+        "jsonwebtoken": "^9.0.3",
+        "module-alias": "^2.3.4",
+        "mongoose": "^9.6.2",
+        "multer": "^2.1.1",
+        "nodemailer": "^8.0.8",
+        "sepay-pg-node": "^1.0.0",
+        "slugify": "^1.6.9",
+        "swagger-ui-express": "^5.0.1"
+    },
+    "devDependencies": {
+        "cross-env": "^10.1.0",
+        "dotenv": "^17.4.2",
+        "morgan": "^1.10.1",
+        "nodemon": "^3.1.14",
+        "prisma": "^7.8.0"
+    }
+}

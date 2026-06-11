@@ -1,0 +1,149 @@
+.layout {
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    background: #f9fafb;
+}
+
+@media (max-width: 900px) {
+    .layout {
+        grid-template-columns: 1fr;
+    }
+}
+
+.sidebar {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    background: #fff;
+    border-right: 1px solid rgba(0, 0, 0, 0.08);
+    padding: 16px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+@media (max-width: 900px) {
+    .sidebar {
+        position: relative;
+        height: auto;
+        border-right: none;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    }
+}
+
+.brand {
+    padding: 10px 10px 14px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.brandTitle {
+    font-size: 16px;
+    font-weight: 800;
+}
+
+.brandSubtitle {
+    margin-top: 2px;
+    font-size: 12px;
+    color: rgba(0, 0, 0, 0.6);
+}
+
+.nav {
+    display: grid;
+    gap: 6px;
+    padding: 4px;
+}
+
+@media (max-width: 900px) {
+    .nav {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (max-width: 520px) {
+    .nav {
+        grid-template-columns: 1fr;
+    }
+}
+
+.navItem {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    padding: 10px 10px;
+    border-radius: 10px;
+    border: 1px solid transparent;
+
+    color: rgba(0, 0, 0, 0.85);
+    font-weight: 600;
+}
+
+.navItem:hover {
+    background: rgba(0, 0, 0, 0.03);
+    border-color: rgba(0, 0, 0, 0.06);
+}
+
+.navItemActive {
+    background: rgba(42, 131, 233, 0.1);
+    border-color: rgba(42, 131, 233, 0.25);
+    color: #1d73d6;
+}
+
+.sidebarFooter {
+    margin-top: auto;
+    padding: 10px;
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
+    display: grid;
+    gap: 10px;
+}
+
+.userLine {
+    font-size: 13px;
+    color: rgba(0, 0, 0, 0.7);
+}
+
+.logoutBtn {
+    width: 100%;
+    border: 1px solid rgba(0, 0, 0, 0.16);
+    background: #fff;
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.logoutBtn:hover {
+    background: rgba(0, 0, 0, 0.03);
+}
+
+.content {
+    padding: 18px 18px 40px;
+}
+
+.contentInner {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 14px;
+    padding: 14px;
+    background: #fff;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 14px;
+}
+
+.pageTitle {
+    font-size: 20px;
+    font-weight: 800;
+}
+
+.breadcrumb {
+    font-size: 13px;
+    color: rgba(0, 0, 0, 0.6);
+}

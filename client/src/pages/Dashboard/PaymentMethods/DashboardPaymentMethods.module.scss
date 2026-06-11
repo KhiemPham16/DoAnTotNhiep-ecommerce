@@ -1,0 +1,272 @@
+.page {
+    display: grid;
+    gap: 14px;
+}
+
+.header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.title {
+    font-size: 18px;
+    font-weight: 800;
+}
+
+.subtitle {
+    margin-top: 4px;
+    color: rgba(0, 0, 0, 0.6);
+    font-size: 13px;
+}
+
+.toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.input,
+.select,
+.form input,
+.form textarea {
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    border-radius: 8px;
+    background: #fff;
+    padding: 10px 12px;
+    font: inherit;
+}
+
+.form textarea {
+    resize: vertical;
+}
+
+.input {
+    min-width: min(340px, 100%);
+}
+
+.select {
+    min-width: 180px;
+}
+
+.primaryBtn {
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    border-radius: 8px;
+    background: #2a83e9;
+    color: #fff;
+    padding: 10px 12px;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.primaryBtn:disabled {
+    cursor: not-allowed;
+    opacity: 0.65;
+}
+
+.summary {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.summary div {
+    display: grid;
+    gap: 4px;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 8px;
+    background: #fff;
+    padding: 12px;
+}
+
+.summary strong {
+    font-size: 22px;
+    line-height: 1;
+}
+
+.summary span {
+    color: rgba(0, 0, 0, 0.58);
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.card {
+    overflow: hidden;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 8px;
+    background: #fff;
+}
+
+.tableWrap {
+    overflow-x: auto;
+}
+
+.table {
+    width: 100%;
+    min-width: 980px;
+    border-collapse: collapse;
+    text-align: left;
+}
+
+.table th,
+.table td {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    padding: 12px;
+    vertical-align: middle;
+}
+
+.table th {
+    background: #f6f8fb;
+    color: rgba(0, 0, 0, 0.68);
+    font-size: 12px;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.table tr:last-child td {
+    border-bottom: 0;
+}
+
+.code {
+    display: inline-flex;
+    border-radius: 8px;
+    background: rgba(42, 131, 233, 0.08);
+    color: #1d73d6;
+    padding: 5px 8px;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+}
+
+.description {
+    color: rgba(0, 0, 0, 0.65);
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.badge {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    padding: 5px 9px;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.active {
+    background: #e7f8ee;
+    color: #10723d;
+}
+
+.inactive {
+    background: #f2f3f5;
+    color: #667085;
+}
+
+.rowActions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.rowActions button,
+.modalHeader button,
+.modalActions button {
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    border-radius: 8px;
+    background: #fff;
+    color: rgba(0, 0, 0, 0.72);
+    padding: 8px 10px;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.modalActions .primaryBtn {
+    background: #2a83e9;
+    color: #fff;
+}
+
+.rowActions .danger {
+    border-color: rgba(220, 38, 38, 0.22);
+    color: #dc2626;
+}
+
+.empty {
+    color: rgba(0, 0, 0, 0.55);
+    text-align: center;
+}
+
+.modalOverlay {
+    position: fixed;
+    z-index: 1000;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow-y: auto;
+    background: rgba(17, 24, 39, 0.48);
+    padding: 18px;
+}
+
+.modalContent {
+    width: min(560px, 100%);
+    max-height: calc(100vh - 36px);
+    overflow-y: auto;
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: 0 20px 48px rgba(0, 0, 0, 0.18);
+}
+
+.modalHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    padding: 16px;
+}
+
+.modalHeader h2 {
+    margin: 0;
+    font-size: 18px;
+}
+
+.form {
+    display: grid;
+    gap: 14px;
+    padding: 16px;
+}
+
+.form label {
+    display: grid;
+    gap: 6px;
+    color: rgba(0, 0, 0, 0.72);
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.checkLabel {
+    display: flex !important;
+    align-items: center;
+    gap: 8px !important;
+}
+
+.modalActions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    border-top: 1px solid rgba(0, 0, 0, 0.08);
+    padding-top: 14px;
+}
+
+@media (max-width: 760px) {
+    .header {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .summary {
+        grid-template-columns: 1fr;
+    }
+}

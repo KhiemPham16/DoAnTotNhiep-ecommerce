@@ -1,0 +1,371 @@
+.page {
+    display: grid;
+    gap: 14px;
+}
+
+.header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.title {
+    font-size: 18px;
+    font-weight: 800;
+}
+
+.subtitle {
+    margin-top: 4px;
+    color: rgba(0, 0, 0, 0.6);
+    font-size: 13px;
+}
+
+.toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.input,
+.select,
+.form input,
+.form select,
+.form textarea,
+.statusSelect {
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    border-radius: 8px;
+    background: #fff;
+    padding: 10px 12px;
+    font: inherit;
+}
+
+.input {
+    min-width: min(380px, 100%);
+}
+
+.select {
+    min-width: 180px;
+}
+
+.primaryBtn {
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    border-radius: 8px;
+    background: #2a83e9;
+    color: #fff;
+    padding: 10px 12px;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.primaryBtn:disabled {
+    cursor: not-allowed;
+    opacity: 0.65;
+}
+
+.summary {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.summary div {
+    display: grid;
+    gap: 4px;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 8px;
+    background: #fff;
+    padding: 12px;
+}
+
+.summary strong {
+    font-size: 22px;
+    line-height: 1.1;
+}
+
+.summary span {
+    color: rgba(0, 0, 0, 0.58);
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.card {
+    overflow: hidden;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 8px;
+    background: #fff;
+}
+
+.tableWrap {
+    overflow-x: auto;
+}
+
+.table {
+    width: 100%;
+    min-width: 900px;
+    border-collapse: collapse;
+    text-align: left;
+}
+
+.table th,
+.table td {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    padding: 12px;
+    vertical-align: middle;
+}
+
+.table th {
+    background: #f6f8fb;
+    color: rgba(0, 0, 0, 0.68);
+    font-size: 12px;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.table tr:last-child td {
+    border-bottom: 0;
+}
+
+.postCell {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.postCell strong,
+.postCell span {
+    display: block;
+}
+
+.postCell span {
+    max-width: 520px;
+    margin-top: 3px;
+    overflow: hidden;
+    color: rgba(0, 0, 0, 0.58);
+    font-size: 13px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.thumb {
+    display: grid;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    flex: 0 0 48px;
+    overflow: hidden;
+    border-radius: 8px;
+    background: #eef4ff;
+    color: #2a83e9;
+    font-weight: 900;
+}
+
+.thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.badge,
+.statusSelect {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.badge {
+    padding: 5px 9px;
+}
+
+.statusSelect {
+    padding: 7px 10px;
+}
+
+.draft {
+    background: #fff7ed;
+    color: #c2410c;
+}
+
+.published {
+    background: #e7f8ee;
+    color: #10723d;
+}
+
+.rowActions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.rowActions button,
+.modalHeader button,
+.modalActions button {
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    border-radius: 8px;
+    background: #fff;
+    color: rgba(0, 0, 0, 0.72);
+    padding: 8px 10px;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.modalActions .primaryBtn {
+    background: #2a83e9;
+    color: #fff;
+}
+
+.rowActions .danger {
+    border-color: rgba(220, 38, 38, 0.22);
+    color: #dc2626;
+}
+
+.empty {
+    color: rgba(0, 0, 0, 0.55);
+    text-align: center;
+}
+
+.modalOverlay {
+    position: fixed;
+    z-index: 1000;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow-y: auto;
+    background: rgba(17, 24, 39, 0.48);
+    padding: 18px;
+}
+
+.modalContent,
+.detailModal {
+    width: min(860px, 100%);
+    max-height: calc(100vh - 36px);
+    overflow-y: auto;
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: 0 20px 48px rgba(0, 0, 0, 0.18);
+}
+
+.detailModal {
+    width: min(920px, 100%);
+}
+
+.modalHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    padding: 16px;
+}
+
+.modalHeader h2 {
+    margin: 0;
+    font-size: 18px;
+}
+
+.modalHeader span {
+    display: block;
+    margin-top: 4px;
+    color: rgba(0, 0, 0, 0.58);
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.form {
+    display: grid;
+    gap: 12px;
+    padding: 16px;
+}
+
+.form label {
+    display: grid;
+    gap: 6px;
+    color: rgba(0, 0, 0, 0.72);
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.checkLabel {
+    display: flex !important;
+    align-items: center;
+    gap: 8px !important;
+}
+
+.form textarea {
+    min-height: 220px;
+    resize: vertical;
+}
+
+.formGrid {
+    display: grid;
+    grid-template-columns: 1fr 180px;
+    gap: 12px;
+}
+
+.modalActions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    border-top: 1px solid rgba(0, 0, 0, 0.08);
+    padding-top: 14px;
+}
+
+.detailBody {
+    display: grid;
+    gap: 14px;
+    padding: 16px;
+}
+
+.cover {
+    width: 100%;
+    max-height: 320px;
+    border-radius: 8px;
+    object-fit: cover;
+}
+
+.detailMeta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.detailMeta span:not(.badge) {
+    border-radius: 999px;
+    background: #f2f3f5;
+    color: rgba(0, 0, 0, 0.62);
+    padding: 5px 9px;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.excerpt {
+    margin: 0;
+    color: rgba(0, 0, 0, 0.68);
+    font-weight: 700;
+}
+
+.content {
+    min-height: 160px;
+    white-space: pre-wrap;
+    line-height: 1.65;
+}
+
+@media (max-width: 720px) {
+    .header {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .summary,
+    .formGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .modalActions {
+        align-items: stretch;
+        flex-direction: column;
+    }
+}
