@@ -39,7 +39,7 @@ function RatingStars({ value = 0, interactive = false, onChange }) {
 
 export default function ProductDetails() {
     const navigate = useNavigate();
-    const { slug: productId } = useParams();
+    const { slug } = useParams();
     const { accessToken, user } = useAuthStore();
     const { addToCart } = useCartStore();
 
@@ -75,7 +75,7 @@ export default function ProductDetails() {
         try {
             setLoading(true);
             setQuantity(1);
-            const response = await productService.getProductById(productId);
+            const response = await productService.getProductBySlug(slug);
             setProduct(response.data || null);
         } catch (error) {
             console.error(error);
@@ -84,12 +84,18 @@ export default function ProductDetails() {
         } finally {
             setLoading(false);
         }
-    }, [productId]);
+    }, [slug]);
 
     const fetchReviews = useCallback(async () => {
+        if (!product?.id) return;
+
         try {
             setReviewsLoading(true);
-            const response = await reviewService.getProductReviews(productId, { page: 1, limit: 20 });
+            const response = await reviewService.getProductReviews(product.id, {
+                page: 1,
+                limit: 20
+            });
+
             setReviews(getReviews(response));
             setReviewPagination(getPagination(response));
         } catch (error) {
@@ -98,22 +104,25 @@ export default function ProductDetails() {
         } finally {
             setReviewsLoading(false);
         }
-    }, [productId]);
+    }, [product?.id]);
 
     useEffect(() => {
         fetchProduct();
+    }, [fetchProduct]);
+
+    useEffect(() => {
         fetchReviews();
-    }, [fetchProduct, fetchReviews]);
+    }, [fetchReviews]);
 
     useEffect(() => {
         const fetchReviewPermission = async () => {
-            if (!accessToken) {
+            if (!accessToken || !product?.id) {
                 setReviewPermission(null);
                 return;
             }
 
             try {
-                const response = await reviewService.canReviewProduct(productId);
+                const response = await reviewService.canReviewProduct(product.id);
                 setReviewPermission(response.data || null);
             } catch (error) {
                 console.error(error);
@@ -122,7 +131,7 @@ export default function ProductDetails() {
         };
 
         fetchReviewPermission();
-    }, [accessToken, productId]);
+    }, [accessToken, product?.id]);
 
     useEffect(() => {
         const fetchRelatedProducts = async () => {
@@ -171,7 +180,8 @@ export default function ProductDetails() {
         category: targetProduct.category,
         author: targetProduct.author,
         publisher: targetProduct.publisher,
-        isbn: targetProduct.isbn
+        isbn: targetProduct.isbn,
+        tagline: targetProduct.tagline
     });
 
     const handleAddToCart = (targetProduct = product, amount = quantity) => {
@@ -208,7 +218,7 @@ export default function ProductDetails() {
         try {
             setSubmittingReview(true);
             await reviewService.createReview({
-                productId,
+                productId: product.id,
                 orderId: reviewPermission.orderId,
                 rating: Number(reviewForm.rating),
                 comment: reviewForm.comment.trim()
@@ -318,6 +328,7 @@ export default function ProductDetails() {
                         </div>
 
                         <div className={cx('book-meta')}>
+                            <span>{product.tagline || '-'}</span>
                             <span>Tác giả: {product.author || '-'}</span>
                             <span>Nhà xuất bản: {product.publisher || '-'}</span>
                             <span>ISBN: {product.isbn || '-'}</span>
@@ -341,12 +352,22 @@ export default function ProductDetails() {
                                 </button>
                             </div>
 
-                            <button className={cx('btn-add-cart')} type="button" disabled={!inStock} onClick={() => handleAddToCart()}>
+                            <button
+                                className={cx('btn-add-cart')}
+                                type="button"
+                                disabled={!inStock}
+                                onClick={() => handleAddToCart()}
+                            >
                                 <FaCartPlus />
                                 Thêm vào giỏ hàng
                             </button>
 
-                            <button className={cx('btn-buy-now')} type="button" disabled={!inStock} onClick={() => handleBuyNow()}>
+                            <button
+                                className={cx('btn-buy-now')}
+                                type="button"
+                                disabled={!inStock}
+                                onClick={() => handleBuyNow()}
+                            >
                                 <FaShoppingBag />
                                 Mua ngay
                             </button>
@@ -388,7 +409,10 @@ export default function ProductDetails() {
                                         <article className={cx('review-item')} key={review.id}>
                                             <div className={cx('review-avatar')}>
                                                 {review.user?.avatarUrl ? (
-                                                    <img src={getImageUrl(review.user.avatarUrl)} alt={review.user.fullName} />
+                                                    <img
+                                                        src={getImageUrl(review.user.avatarUrl)}
+                                                        alt={review.user.fullName}
+                                                    />
                                                 ) : (
                                                     <FaUserCircle />
                                                 )}
@@ -404,7 +428,10 @@ export default function ProductDetails() {
                                                 </div>
 
                                                 {isEditing ? (
-                                                    <form className={cx('inline-review-form')} onSubmit={handleUpdateReview}>
+                                                    <form
+                                                        className={cx('inline-review-form')}
+                                                        onSubmit={handleUpdateReview}
+                                                    >
                                                         <RatingStars
                                                             value={editReviewForm.rating}
                                                             interactive
@@ -437,7 +464,10 @@ export default function ProductDetails() {
                                                         <p>{review.comment || 'Khách hàng chưa để lại nhận xét.'}</p>
                                                         {isMyReview && (
                                                             <div className={cx('review-actions')}>
-                                                                <button type="button" onClick={() => startEditReview(review)}>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => startEditReview(review)}
+                                                                >
                                                                     Sửa đánh giá
                                                                 </button>
                                                             </div>

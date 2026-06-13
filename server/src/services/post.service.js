@@ -8,15 +8,51 @@ class PostService {
         return {
             author: {
                 select: {
-                    id: true,
+                    publicId: true,
                     fullName: true
                 }
-            },
-            categories: {
-                include: {
-                    category: true
-                }
             }
+        };
+    }
+
+    toPublicUser(user) {
+        if (!user) return null;
+
+        return {
+            id: user.publicId,
+            fullName: user.fullName
+        };
+    }
+
+    toPublicBlogCategory(category) {
+        if (!category) return null;
+
+        return {
+            id: category.publicId,
+            name: category.name,
+            slug: category.slug,
+            isActive: category.isActive
+        };
+    }
+
+    toPublicPost(post) {
+        if (!post) return null;
+
+        return {
+            id: post.publicId,
+            slug: post.slug,
+            title: post.title,
+            dek: post.dek,
+            excerpt: post.excerpt,
+            bodyHtml: post.bodyHtml,
+            coverImageUrl: post.coverImageUrl,
+            readMinutes: post.readMinutes,
+            featured: post.featured,
+            publishedAt: post.publishedAt,
+            status: post.status,
+            author: this.toPublicUser(post.author),
+            createdAt: post.createdAt,
+            updatedAt: post.updatedAt
         };
     }
 
@@ -39,6 +75,10 @@ class PostService {
                 postData[field] = data[field];
             }
         });
+
+        if (Object.prototype.hasOwnProperty.call(postData, 'title')) {
+            postData.title = postData.title?.trim();
+        }
 
         if (Object.prototype.hasOwnProperty.call(postData, 'readMinutes')) {
             postData.readMinutes = Number(postData.readMinutes || 1);
@@ -68,7 +108,7 @@ class PostService {
     }
 
     async getPosts() {
-        return prisma.post.findMany({
+        const posts = await prisma.post.findMany({
             where: {
                 status: 'PUBLISHED'
             },
@@ -82,15 +122,19 @@ class PostService {
                 }
             ]
         });
+
+        return posts.map((post) => this.toPublicPost(post));
     }
 
     async getAdminPosts() {
-        return prisma.post.findMany({
+        const posts = await prisma.post.findMany({
             include: this.getInclude(),
             orderBy: {
                 createdAt: 'desc'
             }
         });
+
+        return posts.map((post) => this.toPublicPost(post));
     }
 
     async getPostBySlug(slug) {
@@ -105,7 +149,7 @@ class PostService {
             throw new AppError(404, 'Bài viết không tồn tại');
         }
 
-        return post;
+        return this.toPublicPost(post);
     }
 
     async getAdminPostBySlug(slug) {
@@ -120,11 +164,10 @@ class PostService {
             throw new AppError(404, 'Bài viết không tồn tại');
         }
 
-        return post;
+        return this.toPublicPost(post);
     }
 
     async createPost(authorId, data) {
-        const { categoryIds = [] } = data;
         const postData = this.buildPostData(data);
 
         if (!postData.title) {
@@ -133,25 +176,22 @@ class PostService {
 
         const slug = await generateUniqueSlugPrisma(postData.title, 'post');
 
-        return prisma.post.create({
+        const post = await prisma.post.create({
             data: {
                 ...postData,
                 slug,
-                authorId,
-                categories: {
-                    create: categoryIds.map((categoryId) => ({
-                        categoryId
-                    }))
-                }
+                authorId
             },
             include: this.getInclude()
         });
+
+        return this.toPublicPost(post);
     }
 
     async updatePost(postId, data) {
         const post = await prisma.post.findUnique({
             where: {
-                id: postId
+                publicId: postId
             }
         });
 
@@ -159,8 +199,7 @@ class PostService {
             throw new AppError(404, 'Bài viết không tồn tại');
         }
 
-        const { categoryIds, ...payload } = data;
-        const postData = this.buildPostData(payload, post);
+        const postData = this.buildPostData(data, post);
 
         if (Object.prototype.hasOwnProperty.call(postData, 'title')) {
             if (!postData.title) {
@@ -172,32 +211,21 @@ class PostService {
             }
         }
 
-        return prisma.post.update({
+        const updatedPost = await prisma.post.update({
             where: {
-                id: postId
+                id: post.id
             },
-            data: {
-                ...postData,
-
-                ...(Array.isArray(categoryIds)
-                    ? {
-                          categories: {
-                              deleteMany: {},
-                              create: categoryIds.map((categoryId) => ({
-                                  categoryId
-                              }))
-                          }
-                      }
-                    : {})
-            },
+            data: postData,
             include: this.getInclude()
         });
+
+        return this.toPublicPost(updatedPost);
     }
 
     async deletePost(postId) {
         const post = await prisma.post.findUnique({
             where: {
-                id: postId
+                publicId: postId
             }
         });
 
@@ -207,7 +235,7 @@ class PostService {
 
         await prisma.post.delete({
             where: {
-                id: postId
+                id: post.id
             }
         });
 

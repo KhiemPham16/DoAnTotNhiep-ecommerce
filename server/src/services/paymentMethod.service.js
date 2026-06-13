@@ -4,16 +4,32 @@ const { AppError } = require('~/errors/AppError');
 const { validateCreatePaymentMethodPayload } = require('~/validators/paymentMethod.validator');
 
 class PaymentMethodService {
+    toPublicPaymentMethod(paymentMethod) {
+        if (!paymentMethod) return null;
+
+        return {
+            id: paymentMethod.publicId,
+            name: paymentMethod.name,
+            code: paymentMethod.code,
+            description: paymentMethod.description,
+            isActive: paymentMethod.isActive,
+            createdAt: paymentMethod.createdAt,
+            updatedAt: paymentMethod.updatedAt
+        };
+    }
+
     async getPaymentMethods() {
-        return prisma.paymentMethod.findMany({
+        const paymentMethods = await prisma.paymentMethod.findMany({
             orderBy: {
                 createdAt: 'desc'
             }
         });
+
+        return paymentMethods.map((paymentMethod) => this.toPublicPaymentMethod(paymentMethod));
     }
 
     async getActivePaymentMethods() {
-        return prisma.paymentMethod.findMany({
+        const paymentMethods = await prisma.paymentMethod.findMany({
             where: {
                 isActive: true
             },
@@ -21,12 +37,14 @@ class PaymentMethodService {
                 createdAt: 'desc'
             }
         });
+
+        return paymentMethods.map((paymentMethod) => this.toPublicPaymentMethod(paymentMethod));
     }
 
     async getPaymentMethodById(paymentMethodId) {
         const paymentMethod = await prisma.paymentMethod.findUnique({
             where: {
-                id: paymentMethodId
+                publicId: paymentMethodId
             }
         });
 
@@ -34,7 +52,7 @@ class PaymentMethodService {
             throw new AppError(404, 'Phương thức thanh toán không tồn tại');
         }
 
-        return paymentMethod;
+        return this.toPublicPaymentMethod(paymentMethod);
     }
 
     async createPaymentMethod(data) {
@@ -42,11 +60,12 @@ class PaymentMethodService {
 
         validateCreatePaymentMethodPayload(data);
 
+        const normalizedName = name.trim();
         const normalizedCode = code.toUpperCase().trim();
 
         const existed = await prisma.paymentMethod.findFirst({
             where: {
-                OR: [{ name }, { code: normalizedCode }]
+                OR: [{ name: normalizedName }, { code: normalizedCode }]
             }
         });
 
@@ -54,20 +73,22 @@ class PaymentMethodService {
             throw new AppError(409, 'Phương thức thanh toán đã tồn tại');
         }
 
-        return prisma.paymentMethod.create({
+        const paymentMethod = await prisma.paymentMethod.create({
             data: {
-                name,
+                name: normalizedName,
                 code: normalizedCode,
                 description,
                 isActive
             }
         });
+
+        return this.toPublicPaymentMethod(paymentMethod);
     }
 
     async updatePaymentMethod(paymentMethodId, data) {
         const paymentMethod = await prisma.paymentMethod.findUnique({
             where: {
-                id: paymentMethodId
+                publicId: paymentMethodId
             }
         });
 
@@ -78,7 +99,7 @@ class PaymentMethodService {
         const updateData = {};
 
         if (data.name !== undefined) {
-            updateData.name = data.name;
+            updateData.name = data.name.trim();
         }
 
         if (data.code !== undefined) {
@@ -93,18 +114,20 @@ class PaymentMethodService {
             updateData.isActive = data.isActive;
         }
 
-        return prisma.paymentMethod.update({
+        const updatedPaymentMethod = await prisma.paymentMethod.update({
             where: {
-                id: paymentMethodId
+                id: paymentMethod.id
             },
             data: updateData
         });
+
+        return this.toPublicPaymentMethod(updatedPaymentMethod);
     }
 
     async deletePaymentMethod(paymentMethodId) {
         const paymentMethod = await prisma.paymentMethod.findUnique({
             where: {
-                id: paymentMethodId
+                publicId: paymentMethodId
             }
         });
 
@@ -114,7 +137,7 @@ class PaymentMethodService {
 
         const orderCount = await prisma.order.count({
             where: {
-                paymentMethodId
+                paymentMethodId: paymentMethod.id
             }
         });
 
@@ -127,7 +150,7 @@ class PaymentMethodService {
 
         await prisma.paymentMethod.delete({
             where: {
-                id: paymentMethodId
+                id: paymentMethod.id
             }
         });
 

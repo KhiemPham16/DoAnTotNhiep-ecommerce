@@ -18,7 +18,7 @@ function normalizeAmount(value) {
 async function createSepayCheckout(orderId) {
     const order = await prisma.order.findUnique({
         where: {
-            id: orderId
+            publicId: orderId
         }
     });
 
@@ -38,13 +38,13 @@ async function createSepayCheckout(orderId) {
 
     const checkoutFormFields = client.checkout.initOneTimePaymentFields({
         payment_method: 'BANK_TRANSFER',
-        order_invoice_number: order.id,
+        order_invoice_number: order.publicId,
         order_amount: normalizeAmount(order.finalAmount),
         currency: 'VND',
-        order_description: `Thanh toan don hang ${order.id}`,
-        success_url: `${appConfig.frontendUrl}/payment-confirm?payment=success&orderId=${order.id}`,
-        error_url: `${appConfig.frontendUrl}/payment-confirm?payment=error&orderId=${order.id}`,
-        cancel_url: `${appConfig.frontendUrl}/payment-confirm?payment=cancel&orderId=${order.id}`
+        order_description: `Thanh toan don hang ${order.publicId}`,
+        success_url: `${appConfig.frontendUrl}/payment-confirm?payment=success&orderId=${order.publicId}`,
+        error_url: `${appConfig.frontendUrl}/payment-confirm?payment=error&orderId=${order.publicId}`,
+        cancel_url: `${appConfig.frontendUrl}/payment-confirm?payment=cancel&orderId=${order.publicId}`
     });
 
     await prisma.order.update({
@@ -86,7 +86,7 @@ async function handleSepayWebhook(payload) {
         };
     }
 
-    const orderId =
+    const orderPublicId =
         payload?.order?.order_invoice_number ||
         payload?.order_invoice_number ||
         payload?.invoice_number ||
@@ -102,20 +102,13 @@ async function handleSepayWebhook(payload) {
             payload?.transfer_amount
     );
 
-    const transactionId =
-        payload?.transaction?.transaction_id ||
-        payload?.transaction_id ||
-        payload?.transactionId ||
-        payload?.id ||
-        null;
-
-    if (!orderId) {
+    if (!orderPublicId) {
         throw new AppError(400, 'Webhook thiếu mã đơn hàng');
     }
 
     const order = await prisma.order.findUnique({
         where: {
-            id: orderId
+            publicId: orderPublicId
         }
     });
 

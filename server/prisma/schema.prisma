@@ -62,7 +62,8 @@ enum MediaType {
 }
 
 model User {
-  id String @id @default(uuid())
+  id       Int    @id @default(autoincrement())
+  publicId String @unique @default(uuid())
 
   username String @unique
   fullName String
@@ -84,12 +85,13 @@ model User {
   resetPasswordOtp          String?
   resetPasswordOtpExpiresAt DateTime?
 
-  sessions Session[]
-  address  Address?
-  orders   Order[]
-  posts    Post[]
-
-  uploadedMedia Media[]
+  sessions       Session[]
+  address        Address?
+  orders         Order[]   @relation("UserOrders")
+  approvedOrders Order[]   @relation("ApprovedOrders")
+  posts          Post[]
+  uploadedMedia  Media[]
+  reviews        Review[]
 
   emailVerifiedAt DateTime?
   deletedAt       DateTime?
@@ -97,17 +99,16 @@ model User {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  reviews   Review[]
 }
 
 model Session {
-  id String @id @default(uuid())
+  id       Int    @id @default(autoincrement())
+  publicId String @unique @default(uuid())
 
-  refreshToken String @unique
+  refreshToken String   @unique
+  expiresAt    DateTime
 
-  expiresAt DateTime
-
-  userId String
+  userId Int
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -115,7 +116,8 @@ model Session {
 }
 
 model Address {
-  id String @id @default(uuid())
+  id       Int    @id @default(autoincrement())
+  publicId String @unique @default(uuid())
 
   receiverName  String
   receiverPhone String
@@ -127,7 +129,7 @@ model Address {
 
   isDefault Boolean @default(false)
 
-  userId String @unique
+  userId Int @unique
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -138,10 +140,10 @@ model Address {
 }
 
 model Category {
-  id String @id @default(uuid())
+  id       Int    @id @default(autoincrement())
+  publicId String @unique @default(uuid())
 
   name String @unique
-
   slug String @unique
 
   isActive Boolean @default(true)
@@ -153,7 +155,8 @@ model Category {
 }
 
 model Product {
-  id String @id @default(uuid())
+  id       Int    @id @default(autoincrement())
+  publicId String @unique @default(uuid())
 
   title String
 
@@ -164,6 +167,8 @@ model Product {
   publisher String?
 
   isbn String?
+
+  tagline String? @db.VarChar(255)
 
   description String? @db.Text
 
@@ -183,7 +188,7 @@ model Product {
 
   deletedAt DateTime?
 
-  categoryId String
+  categoryId Int
 
   category Category @relation(fields: [categoryId], references: [id])
 
@@ -198,11 +203,12 @@ model Product {
 }
 
 model Review {
-  id String @id @default(uuid())
+  id       Int    @id @default(autoincrement())
+  publicId String @unique @default(uuid())
 
-  userId    String
-  productId String
-  orderId   String
+  userId    Int
+  productId Int
+  orderId   Int
 
   rating  Int
   comment String?
@@ -218,7 +224,8 @@ model Review {
 }
 
 model Coupon {
-  id String @id @default(uuid())
+  id       Int    @id @default(autoincrement())
+  publicId String @unique @default(uuid())
 
   couponType CouponType
 
@@ -249,14 +256,18 @@ model Coupon {
 }
 
 model Order {
-  id String @id @default(uuid())
+  id       Int    @id @default(autoincrement())
+  publicId String @unique @default(uuid())
 
-  userId          String
-  addressId       String
-  couponId        String?
-  paymentMethodId String
+  userId          Int
+  addressId       Int
+  couponId        Int?
+  paymentMethodId Int
 
-  user          User          @relation(fields: [userId], references: [id])
+  approvedById Int?
+
+  user          User          @relation("UserOrders", fields: [userId], references: [id])
+  approvedBy    User?         @relation("ApprovedOrders", fields: [approvedById], references: [id])
   address       Address       @relation(fields: [addressId], references: [id])
   coupon        Coupon?       @relation(fields: [couponId], references: [id])
   paymentMethod PaymentMethod @relation(fields: [paymentMethodId], references: [id])
@@ -275,14 +286,17 @@ model Order {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   reviews   Review[]
+
+  @@index([approvedById])
 }
 
 model OrderItem {
-  id String @id @default(uuid())
+  id       Int    @id @default(autoincrement())
+  publicId String @unique @default(uuid())
 
-  orderId String
+  orderId Int
 
-  productId String
+  productId Int
 
   title String
 
@@ -298,7 +312,8 @@ model OrderItem {
 }
 
 model PaymentMethod {
-  id String @id @default(uuid())
+  id       Int    @id @default(autoincrement())
+  publicId String @unique @default(uuid())
 
   name String @unique
   code String @unique
@@ -313,22 +328,9 @@ model PaymentMethod {
   updatedAt DateTime @updatedAt
 }
 
-model BlogCategory {
-  id String @id @default(uuid())
-
-  name String @unique
-  slug String @unique
-
-  isActive Boolean @default(true)
-
-  posts PostBlogCategory[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
 model Post {
-  id String @id @default(uuid())
+  id       Int    @id @default(autoincrement())
+  publicId String @unique @default(uuid())
 
   slug  String @unique
   title String
@@ -348,10 +350,8 @@ model Post {
 
   status PostStatus @default(DRAFT)
 
-  authorId String
-  author   User   @relation(fields: [authorId], references: [id], onDelete: Restrict)
-
-  categories PostBlogCategory[]
+  authorId Int
+  author   User @relation(fields: [authorId], references: [id], onDelete: Restrict)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -361,20 +361,9 @@ model Post {
   @@index([status])
 }
 
-model PostBlogCategory {
-  postId     String
-  categoryId String
-
-  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
-
-  category BlogCategory @relation(fields: [categoryId], references: [id], onDelete: Restrict)
-
-  @@id([postId, categoryId])
-  @@index([categoryId])
-}
-
 model Media {
-  id String @id @default(uuid())
+  id       Int    @id @default(autoincrement())
+  publicId String @unique @default(uuid())
 
   fileName     String
   originalName String
@@ -389,8 +378,8 @@ model Media {
   alt    String?
   folder String?
 
-  uploadedById String?
-  uploadedBy   User?   @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
+  uploadedById Int?
+  uploadedBy   User? @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

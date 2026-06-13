@@ -84,6 +84,7 @@ export default function Category() {
     const buildCartProduct = (product) => ({
         id: product.id,
         title: product.title,
+        slug: product.slug,
         price: product.price,
         thumbnail: product.thumbnail,
         stock: product.stock,
@@ -157,7 +158,7 @@ export default function Category() {
                         <div className={cx('products-grid')}>
                             {products.map((product) => (
                                 <article key={product.id} className={cx('product-card')}>
-                                    <Link to={`/product/${product.id}`} className={cx('product-link')}>
+                                    <Link to={`/product/${product.slug}`} className={cx('product-link')}>
                                         <div className={cx('thumb')}>
                                             {product.thumbnail ? (
                                                 <img src={getImageUrl(product.thumbnail)} alt={product.title} />

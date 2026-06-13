@@ -63,6 +63,11 @@ export default function ProductForm({ categories, formData, saving, onChange, on
             />
 
             <label>
+                Tagline
+                <input name="tagline" value={formData.tagline} onChange={onChange} />
+            </label>
+
+            <label>
                 Mô tả
                 <textarea name="description" rows="4" value={formData.description} onChange={onChange} />
             </label>

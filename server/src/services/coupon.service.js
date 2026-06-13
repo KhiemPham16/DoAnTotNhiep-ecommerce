@@ -4,6 +4,27 @@ const { AppError } = require('~/errors/AppError');
 const { validateCreateCouponPayload, validateCouponPayload } = require('~/validators/coupon.validator');
 
 class CouponService {
+    toPublicCoupon(coupon) {
+        if (!coupon) return null;
+
+        return {
+            id: coupon.publicId,
+            couponType: coupon.couponType,
+            code: coupon.code,
+            type: coupon.type,
+            value: coupon.value,
+            minOrderAmount: coupon.minOrderAmount,
+            maxDiscountAmount: coupon.maxDiscountAmount,
+            usageLimit: coupon.usageLimit,
+            usedCount: coupon.usedCount,
+            startsAt: coupon.startsAt,
+            expiresAt: coupon.expiresAt,
+            isActive: coupon.isActive,
+            createdAt: coupon.createdAt,
+            updatedAt: coupon.updatedAt
+        };
+    }
+
     generateHolidayCode(expiresAt) {
         const date = new Date(expiresAt);
 
@@ -39,17 +60,19 @@ class CouponService {
     }
 
     async getCoupons() {
-        return prisma.coupon.findMany({
+        const coupons = await prisma.coupon.findMany({
             orderBy: {
                 createdAt: 'desc'
             }
         });
+
+        return coupons.map((coupon) => this.toPublicCoupon(coupon));
     }
 
     async getCouponById(couponId) {
         const coupon = await prisma.coupon.findUnique({
             where: {
-                id: couponId
+                publicId: couponId
             }
         });
 
@@ -57,10 +80,12 @@ class CouponService {
             throw new AppError(404, 'Mã giảm giá không tồn tại');
         }
 
-        return coupon;
+        return this.toPublicCoupon(coupon);
     }
 
     async createCoupon(data) {
+        validateCreateCouponPayload(data);
+
         const {
             couponType,
             code,
@@ -73,8 +98,6 @@ class CouponService {
             expiresAt,
             isActive
         } = data;
-
-        validateCreateCouponPayload(data);
 
         let couponCode;
 
@@ -92,7 +115,7 @@ class CouponService {
 
         couponCode = await this.makeUniqueCode(couponCode);
 
-        return prisma.coupon.create({
+        const coupon = await prisma.coupon.create({
             data: {
                 couponType: couponType.toUpperCase(),
                 code: couponCode,
@@ -106,12 +129,14 @@ class CouponService {
                 isActive
             }
         });
+
+        return this.toPublicCoupon(coupon);
     }
 
     async updateCoupon(couponId, data) {
         const coupon = await prisma.coupon.findUnique({
             where: {
-                id: couponId
+                publicId: couponId
             }
         });
 
@@ -121,15 +146,7 @@ class CouponService {
 
         const updateData = {};
 
-        const allowedFields = [
-            'value',
-            'minOrderAmount',
-            'maxDiscountAmount',
-            'usageLimit',
-            'startsAt',
-            'expiresAt',
-            'isActive'
-        ];
+        const allowedFields = ['value', 'minOrderAmount', 'maxDiscountAmount', 'usageLimit', 'isActive'];
 
         allowedFields.forEach((field) => {
             if (data[field] !== undefined) {
@@ -149,18 +166,20 @@ class CouponService {
             updateData.expiresAt = new Date(data.expiresAt);
         }
 
-        return prisma.coupon.update({
+        const updatedCoupon = await prisma.coupon.update({
             where: {
-                id: couponId
+                id: coupon.id
             },
             data: updateData
         });
+
+        return this.toPublicCoupon(updatedCoupon);
     }
 
     async deleteCoupon(couponId) {
         const coupon = await prisma.coupon.findUnique({
             where: {
-                id: couponId
+                publicId: couponId
             }
         });
 
@@ -170,7 +189,7 @@ class CouponService {
 
         await prisma.coupon.delete({
             where: {
-                id: couponId
+                id: coupon.id
             }
         });
 
@@ -230,7 +249,7 @@ class CouponService {
         discountAmount = Math.min(discountAmount, orderAmount);
 
         return {
-            coupon,
+            coupon: this.toPublicCoupon(coupon),
             discountAmount,
             finalAmount: orderAmount - discountAmount
         };

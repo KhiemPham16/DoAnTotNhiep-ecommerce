@@ -8,10 +8,11 @@ const { authenticate } = require('~/middlewares/authenticate.middleware');
 const { authorize } = require('~/middlewares/rbac.middleware');
 
 router.get('/', productController.index);
-router.get('/:id', productController.show);
 
 router.post('/', authenticate, authorize('ADMIN', 'MANAGER', 'EMPLOYEE'), productController.store);
-router.patch('/:id', authenticate, authorize('ADMIN', 'MANAGER', 'EMPLOYEE'), productController.update);
-router.delete('/:id', authenticate, authorize('ADMIN', 'MANAGER', 'EMPLOYEE'), productController.destroy);
+router.patch('/id/:id', authenticate, authorize('ADMIN', 'MANAGER', 'EMPLOYEE'), productController.update);
+router.delete('/id/:id', authenticate, authorize('ADMIN', 'MANAGER', 'EMPLOYEE'), productController.destroy);
+
+router.get('/:slug', productController.show);
 
 module.exports = router;

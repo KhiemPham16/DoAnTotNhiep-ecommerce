@@ -152,35 +152,33 @@ async function main() {
         where: {
             code: 'COD'
         },
-        update: {},
+        update: {
+            name: 'Thanh toán khi nhận hàng',
+            description: 'Khách hàng thanh toán khi nhận hàng',
+            isActive: true
+        },
         create: {
             name: 'Thanh toán khi nhận hàng',
             code: 'COD',
-            description: 'Khách hàng thanh toán khi nhận hàng'
+            description: 'Khách hàng thanh toán khi nhận hàng',
+            isActive: true
         }
     });
 
     await prisma.paymentMethod.upsert({
         where: {
-            code: 'BANK_TRANSFER'
+            code: 'SEPAY'
         },
-        update: {},
-        create: {
-            name: 'Chuyển khoản ngân hàng',
-            code: 'BANK_TRANSFER',
-            description: 'Thanh toán qua ngân hàng'
-        }
-    });
-
-    await prisma.paymentMethod.upsert({
-        where: {
-            code: 'SePay'
+        update: {
+            name: 'Chuyển khoản SePay',
+            description: 'Thanh toán qua SePay',
+            isActive: true
         },
-        update: {},
         create: {
             name: 'Chuyển khoản SePay',
-            code: 'SePay',
-            description: 'Thanh toán qua SePay'
+            code: 'SEPAY',
+            description: 'Thanh toán qua SePay',
+            isActive: true
         }
     });
 
@@ -192,38 +190,65 @@ async function main() {
         {
             title: 'Đắc Nhân Tâm',
             slug: 'dac-nhan-tam',
+            tagline: 'Cuốn sách kinh điển về nghệ thuật giao tiếp và ứng xử.',
             author: 'Dale Carnegie',
             price: 120000,
             stock: 100,
             thumbnail: '/uploads/media/products/dac-nhan-tam.png',
-            categoryId: categories[1].id
+            categoryId: categories[1].id,
+            description: `
+            Đắc Nhân Tâm là một trong những cuốn sách phát triển bản thân nổi tiếng nhất thế giới.
+            Nội dung tập trung vào nghệ thuật giao tiếp, xây dựng mối quan hệ và tạo ảnh hưởng tích cực
+            trong công việc cũng như cuộc sống.
+        `,
+            isFeatured: true
         },
         {
             title: 'Clean Code',
             slug: 'clean-code',
+            tagline: 'Nghệ thuật viết mã nguồn sạch dành cho mọi lập trình viên.',
             author: 'Robert C. Martin',
             price: 250000,
             stock: 50,
             thumbnail: '/uploads/media/products/clean-code.png',
-            categoryId: categories[2].id
+            categoryId: categories[2].id,
+            description: `
+            Clean Code giúp lập trình viên hiểu cách đặt tên biến, tổ chức hàm,
+            quản lý class và xây dựng hệ thống dễ bảo trì.
+            Đây là cuốn sách nền tảng dành cho mọi developer chuyên nghiệp.
+        `,
+            isFeatured: true
         },
         {
             title: 'Lập Trình JavaScript',
             slug: 'lap-trinh-javascript',
+            tagline: 'Hành trình từ JavaScript cơ bản đến xây dựng ứng dụng hiện đại.',
             author: 'F8 Team',
             price: 180000,
             stock: 80,
             thumbnail: '/uploads/media/products/js-pro.png',
-            categoryId: categories[2].id
+            categoryId: categories[2].id,
+            description: `
+            Cuốn sách hướng dẫn JavaScript từ nền tảng đến nâng cao,
+            bao gồm ES6+, bất đồng bộ, DOM, module và các kỹ thuật thực chiến.
+            Phù hợp cho sinh viên và lập trình viên frontend.
+        `,
+            isFeatured: true
         },
         {
-            title: 'Harry Potter',
+            title: 'Harry Potter Và Hòn Đá Phù Thủy',
             slug: 'harry-potter',
+            tagline: 'Bước vào thế giới phép thuật kỳ diệu cùng Harry Potter.',
             author: 'J.K. Rowling',
             price: 200000,
             stock: 60,
             thumbnail: '/uploads/media/products/harry-potter.png',
-            categoryId: categories[0].id
+            categoryId: categories[0].id,
+            description: `
+            Tập đầu tiên trong loạt truyện Harry Potter nổi tiếng toàn cầu.
+            Cuốn sách mở ra hành trình đầy phép thuật, tình bạn và những cuộc phiêu lưu hấp dẫn.
+        `,
+            isFeatured: true
         }
     ];
 
@@ -232,14 +257,8 @@ async function main() {
             where: {
                 slug: productData.slug
             },
-            update: {
-                ...productData,
-                description: `${productData.title} description`
-            },
-            create: {
-                ...productData,
-                description: `${productData.title} description`
-            }
+            update: productData,
+            create: productData
         });
 
         products.push(product);
@@ -279,7 +298,15 @@ async function main() {
         where: {
             code: 'KHIEM50K'
         },
-        update: {},
+        update: {
+            couponType: 'CUSTOM',
+            type: 'FIXED',
+            value: 50000,
+            minOrderAmount: 300000,
+            usageLimit: 100,
+            expiresAt: new Date('2027-12-31T23:59:59.000Z'),
+            isActive: true
+        },
         create: {
             couponType: 'CUSTOM',
             code: 'KHIEM50K',
@@ -287,7 +314,8 @@ async function main() {
             value: 50000,
             minOrderAmount: 300000,
             usageLimit: 100,
-            expiresAt: new Date('2027-12-31T23:59:59.000Z')
+            expiresAt: new Date('2027-12-31T23:59:59.000Z'),
+            isActive: true
         }
     });
 
@@ -295,7 +323,16 @@ async function main() {
         where: {
             code: 'SALE10'
         },
-        update: {},
+        update: {
+            couponType: 'CUSTOM',
+            type: 'PERCENT',
+            value: 10,
+            minOrderAmount: 200000,
+            maxDiscountAmount: 100000,
+            usageLimit: 100,
+            expiresAt: new Date('2027-12-31T23:59:59.000Z'),
+            isActive: true
+        },
         create: {
             couponType: 'CUSTOM',
             code: 'SALE10',
@@ -304,7 +341,8 @@ async function main() {
             minOrderAmount: 200000,
             maxDiscountAmount: 100000,
             usageLimit: 100,
-            expiresAt: new Date('2027-12-31T23:59:59.000Z')
+            expiresAt: new Date('2027-12-31T23:59:59.000Z'),
+            isActive: true
         }
     });
 
@@ -368,6 +406,58 @@ async function main() {
     }
 
     console.log('Seed orders completed');
+
+    const customer1 = await prisma.user.findUnique({
+        where: {
+            email: 'customer1@gmail.com'
+        }
+    });
+
+    const customerOrder = await prisma.order.findFirst({
+        where: {
+            userId: customer1.id
+        }
+    });
+
+    if (customerOrder) {
+        const reviewSeeds = [
+            {
+                productId: products[0].id,
+                rating: 5,
+                comment: 'Nội dung rất thực tế, đọc xong áp dụng được ngay vào cuộc sống và công việc.'
+            },
+            {
+                productId: products[1].id,
+                rating: 5,
+                comment: 'Cuốn sách bắt buộc nên đọc với lập trình viên. Nhiều kiến thức vẫn còn giá trị đến hiện nay.'
+            }
+        ];
+
+        for (const reviewData of reviewSeeds) {
+            await prisma.review.upsert({
+                where: {
+                    userId_productId_orderId: {
+                        userId: customer1.id,
+                        productId: reviewData.productId,
+                        orderId: customerOrder.id
+                    }
+                },
+                update: {
+                    rating: reviewData.rating,
+                    comment: reviewData.comment
+                },
+                create: {
+                    userId: customer1.id,
+                    productId: reviewData.productId,
+                    orderId: customerOrder.id,
+                    rating: reviewData.rating,
+                    comment: reviewData.comment
+                }
+            });
+        }
+    }
+
+    console.log('Seed reviews completed');
 
     const postSeeds = [
         {

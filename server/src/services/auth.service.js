@@ -6,9 +6,12 @@ const prisma = require('~/libs/prisma');
 
 const mailService = require('~/services/mail.service');
 
+const mailQueue = require('~/queues/mail.queue');
+
 const authConfig = require('~/configs/auth.config');
 const { dateAfterExpiresIn } = require('~/utils/expiresIn');
 const { generateUsername } = require('~/utils/generateUsername');
+
 const {
     validateToken,
     validateRegisterPayload,
@@ -23,6 +26,25 @@ const { AppError } = require('~/errors/AppError');
 const appConfig = require('~/configs/app.config');
 
 class AuthService {
+    toPublicUser(user) {
+        if (!user) return null;
+
+        return {
+            id: user.publicId,
+            username: user.username,
+            fullName: user.fullName,
+            email: user.email,
+            phone: user.phone,
+            role: user.role,
+            avatarUrl: user.avatarUrl,
+            gender: user.gender,
+            emailVerifiedAt: user.emailVerifiedAt,
+            lastLogin: user.lastLogin,
+            createdAt: user.createdAt,
+            updatedAt: user.updatedAt
+        };
+    }
+
     generateVerificationLink(user) {
         return `${appConfig.frontendUrl}/verify-email?token=${user.verificationToken}`;
     }
@@ -43,7 +65,7 @@ class AuthService {
             throw new AppError(400, 'Token không hợp lệ hoặc đã hết hạn');
         }
 
-        await prisma.user.update({
+        const updatedUser = await prisma.user.update({
             where: {
                 id: user.id
             },
@@ -54,7 +76,12 @@ class AuthService {
             }
         });
 
-        await mailService.sendGreetingEmail(user);
+        await mailQueue.add('send-greeting-email', {
+            type: 'GREETING_EMAIL',
+            payload: {
+                user: updatedUser
+            }
+        });
 
         return true;
     }
@@ -92,9 +119,15 @@ class AuthService {
         try {
             const verificationLink = this.generateVerificationLink(user);
 
-            await mailService.sendVerificationEmail(user, verificationLink);
+            await mailQueue.add('send-verification-email', {
+                type: 'VERIFY_EMAIL',
+                payload: {
+                    user,
+                    verificationLink
+                }
+            });
 
-            return user;
+            return true;
         } catch (error) {
             await prisma.user.delete({
                 where: {
@@ -169,7 +202,6 @@ class AuthService {
         });
 
         return {
-            user: updatedUser,
             accessToken,
             refreshToken
         };
@@ -264,7 +296,13 @@ class AuthService {
         });
 
         try {
-            await mailService.sendForgotPasswordOtpEmail(updatedUser, otp);
+            await mailQueue.add('send-forgot-password-otp', {
+                type: 'FORGOT_PASSWORD_OTP',
+                payload: {
+                    user: updatedUser,
+                    otp
+                }
+            });
         } catch (error) {
             console.error('SEND FORGOT PASSWORD OTP EMAIL ERROR:', error);
             throw new AppError(500, 'Không gửi được email OTP, vui lòng thử lại');
@@ -309,7 +347,12 @@ class AuthService {
             }
         });
 
-        await mailService.sendChangePasswordEmail(updatedUser);
+        await mailQueue.add('send-change-password-email', {
+            type: 'CHANGE_PASSWORD_EMAIL',
+            payload: {
+                user: updatedUser
+            }
+        });
 
         return true;
     }
@@ -356,7 +399,12 @@ class AuthService {
             }
         });
 
-        mailService.sendChangePasswordEmail(updatedUser).catch(console.error);
+        await mailQueue.add('send-change-password-email', {
+            type: 'CHANGE_PASSWORD_EMAIL',
+            payload: {
+                user: updatedUser
+            }
+        });
 
         return true;
     }

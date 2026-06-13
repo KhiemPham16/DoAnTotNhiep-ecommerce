@@ -18,7 +18,7 @@ const orderStatusLabels = {
     CANCELLED: 'Đã hủy'
 };
 
-const staffRoles = ['ADMIN', 'MANAGER', 'EMPLOYEE'];
+const staffRoles = ['EMPLOYEE'];
 
 const formatMoney = (value) =>
     new Intl.NumberFormat('vi-VN', {
@@ -149,16 +149,14 @@ export default function Dashboard() {
             }
 
             order.items?.forEach((item) => {
-                const current =
-                    soldMap.get(item.productId) ||
-                    {
-                        id: item.productId,
-                        title: item.title,
-                        category: '-',
-                        stock: 0,
-                        sold: 0,
-                        revenue: 0
-                    };
+                const current = soldMap.get(item.productId) || {
+                    id: item.productId,
+                    title: item.title,
+                    category: '-',
+                    stock: 0,
+                    sold: 0,
+                    revenue: 0
+                };
 
                 current.sold += Number(item.quantity || 0);
                 current.revenue += Number(item.subtotal || 0);
@@ -189,15 +187,17 @@ export default function Dashboard() {
     const salesStaffStats = useMemo(() => {
         const staffMap = new Map();
 
-        users.filter((user) => staffRoles.includes(user.role)).forEach((user) => {
-            staffMap.set(user.id, {
-                id: user.id,
-                name: user.fullName,
-                role: user.role,
-                orders: 0,
-                revenue: 0
+        users
+            .filter((user) => staffRoles.includes(user.role))
+            .forEach((user) => {
+                staffMap.set(user.id, {
+                    id: user.id,
+                    name: user.fullName,
+                    role: user.role,
+                    orders: 0,
+                    revenue: 0
+                });
             });
-        });
 
         let hasAssignedOrders = false;
 
@@ -229,7 +229,7 @@ export default function Dashboard() {
                 <div>
                     <div className={cp('title')}>Tổng quan</div>
                     <div className={cp('subtitle')}>
-                        Theo dõi doanh thu, đơn hàng, sản phẩm, tồn kho và hiệu suất vận hành.
+                        Theo dõi doanh thu ghi nhận, đơn hàng, sản phẩm, tồn kho và hiệu suất vận hành.
                     </div>
                 </div>
 
@@ -245,14 +245,14 @@ export default function Dashboard() {
 
             <div className={cx('metricGrid')}>
                 <div className={cx('metricCard')}>
-                    <span>Doanh thu</span>
+                    <span>Tổng doanh thu ghi nhận</span>
                     <strong>{formatMoney(stats.totalRevenue)}</strong>
-                    <small>Hôm nay: {formatMoney(stats.todayRevenue)}</small>
+                    <small>Doanh thu hôm nay: {formatMoney(stats.todayRevenue)}</small>
                 </div>
                 <div className={cx('metricCard')}>
-                    <span>Doanh thu hoàn thành</span>
+                    <span>Doanh thu đã hoàn tất</span>
                     <strong>{formatMoney(stats.completedRevenue)}</strong>
-                    <small>Giá trị đơn TB: {formatMoney(stats.averageOrderValue)}</small>
+                    <small>Giá trị đơn hàng trung bình: {formatMoney(stats.averageOrderValue)}</small>
                 </div>
                 <div className={cx('metricCard')}>
                     <span>Đơn hàng</span>
@@ -270,8 +270,8 @@ export default function Dashboard() {
                 <section className={cx('panel', 'wide')}>
                     <div className={cx('panelHeader')}>
                         <div>
-                            <h2>Doanh thu theo thời gian</h2>
-                            <p>7 ngày gần nhất, không tính đơn đã hủy.</p>
+                            <h2>Xu hướng doanh thu ghi nhận</h2>
+                            <p>7 ngày gần nhất, loại trừ đơn đã hủy.</p>
                         </div>
                     </div>
 
@@ -298,8 +298,8 @@ export default function Dashboard() {
                 <section className={cx('panel')}>
                     <div className={cx('panelHeader')}>
                         <div>
-                            <h2>Thống kê đơn hàng</h2>
-                            <p>Phân bổ theo trạng thái.</p>
+                            <h2>Phân bổ trạng thái đơn hàng</h2>
+                            <p>Số lượng đơn hàng theo từng trạng thái xử lý.</p>
                         </div>
                     </div>
 
@@ -318,8 +318,8 @@ export default function Dashboard() {
                 <section className={cx('panel')}>
                     <div className={cx('panelHeader')}>
                         <div>
-                            <h2>Sản phẩm bán chạy</h2>
-                            <p>Xếp theo số lượng đã bán.</p>
+                            <h2>Top sản phẩm theo sản lượng bán</h2>
+                            <p>Xếp hạng theo số lượng bán ra và doanh thu ghi nhận.</p>
                         </div>
                     </div>
 
@@ -347,8 +347,8 @@ export default function Dashboard() {
                 <section className={cx('panel')}>
                     <div className={cx('panelHeader')}>
                         <div>
-                            <h2>Sản phẩm tồn kho</h2>
-                            <p>Ưu tiên sản phẩm tồn thấp.</p>
+                            <h2>Cảnh báo tồn kho</h2>
+                            <p>Ưu tiên các sản phẩm có tồn kho thấp hoặc đã hết hàng.</p>
                         </div>
                     </div>
 
@@ -362,7 +362,15 @@ export default function Dashboard() {
                                         <strong>{product.title}</strong>
                                         <small>{product.category || '-'}</small>
                                     </div>
-                                    <span className={cx(product.stock === 0 ? 'dangerBadge' : product.stock <= 5 ? 'warnBadge' : 'okBadge')}>
+                                    <span
+                                        className={cx(
+                                            product.stock === 0
+                                                ? 'dangerBadge'
+                                                : product.stock <= 5
+                                                  ? 'warnBadge'
+                                                  : 'okBadge'
+                                        )}
+                                    >
                                         {product.stock} tồn kho
                                     </span>
                                 </div>
@@ -375,7 +383,7 @@ export default function Dashboard() {
             <section className={cx('panel')}>
                 <div className={cx('panelHeader')}>
                     <div>
-                        <h2>Thống kê nhân viên bán hàng</h2>
+                        <h2>Hiệu suất nhân viên bán hàng</h2>
                         <p>
                             {salesStaffStats.hasAssignedOrders
                                 ? 'Dựa trên đơn hàng có thông tin nhân viên phụ trách.'
@@ -401,7 +409,7 @@ export default function Dashboard() {
                                 </div>
                                 <div>
                                     <strong>{formatMoney(staff.revenue)}</strong>
-                                    <span>doanh thu</span>
+                                    <span>doanh số phụ trách</span>
                                 </div>
                             </div>
                         ))
