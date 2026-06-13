@@ -56,7 +56,7 @@ class OrderController {
 
     async updateStatus(req, res, next) {
         try {
-            const order = await orderService.updateStatus(req.params.id, req.body.status);
+            const order = await orderService.updateStatus(req.params.id, req.body.status, req.user.id);
 
             return res.status(200).json({
                 success: true,
@@ -72,8 +72,52 @@ class OrderController {
         try {
             const order = await orderService.updatePaymentStatus(req.params.id, req.body.paymentStatus);
 
-            return res.success(200, order, {
-                message: 'Cập nhật trạng thái thanh toán thành công'
+            return res.status(200).json({
+                success: true,
+                message: 'Cập nhật trạng thái thanh toán thành công',
+                data: order
+            });
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    async assign(req, res, next) {
+        try {
+            const order = await orderService.assignOrder(req.params.id, req.body.employeeId);
+
+            return res.status(200).json({
+                success: true,
+                message: 'Phân công nhân viên phụ trách đơn hàng thành công',
+                data: order
+            });
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    async approve(req, res, next) {
+        try {
+            const order = await orderService.approveOrder(req.params.id, req.user.id);
+
+            return res.status(200).json({
+                success: true,
+                message: 'Duyệt đơn hàng thành công',
+                data: order
+            });
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    async unassign(req, res, next) {
+        try {
+            const order = await orderService.unassignOrder(req.params.id);
+
+            return res.status(200).json({
+                success: true,
+                message: 'Hủy phân công đơn hàng thành công',
+                data: order
             });
         } catch (error) {
             next(error);

@@ -89,6 +89,7 @@ model User {
   address        Address?
   orders         Order[]   @relation("UserOrders")
   approvedOrders Order[]   @relation("ApprovedOrders")
+  assignedOrders Order[]   @relation("AssignedOrders")
   posts          Post[]
   uploadedMedia  Media[]
   reviews        Review[]
@@ -265,9 +266,11 @@ model Order {
   paymentMethodId Int
 
   approvedById Int?
+  assignedToId Int?
 
   user          User          @relation("UserOrders", fields: [userId], references: [id])
   approvedBy    User?         @relation("ApprovedOrders", fields: [approvedById], references: [id])
+  assignedTo    User?         @relation("AssignedOrders", fields: [assignedToId], references: [id])
   address       Address       @relation(fields: [addressId], references: [id])
   coupon        Coupon?       @relation(fields: [couponId], references: [id])
   paymentMethod PaymentMethod @relation(fields: [paymentMethodId], references: [id])
@@ -281,13 +284,15 @@ model Order {
 
   note String? @db.Text
 
-  items OrderItem[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  reviews   Review[]
+  items      OrderItem[]
+  reviews    Review[]
+  assignedAt DateTime?
+  approvedAt DateTime?
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
 
   @@index([approvedById])
+  @@index([assignedToId])
 }
 
 model OrderItem {

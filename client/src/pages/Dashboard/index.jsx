@@ -18,7 +18,7 @@ const orderStatusLabels = {
     CANCELLED: 'Đã hủy'
 };
 
-const staffRoles = ['EMPLOYEE'];
+const staffRoles = ['ADMIN', 'MANAGER', 'EMPLOYEE'];
 
 const formatMoney = (value) =>
     new Intl.NumberFormat('vi-VN', {
@@ -42,15 +42,9 @@ const formatShortDate = (date) =>
 
 const getOrderRevenue = (order) => (order.status === 'CANCELLED' ? 0 : Number(order.finalAmount || 0));
 
-const getSalesPerson = (order) =>
-    order.employee ||
-    order.staff ||
-    order.seller ||
-    order.salesperson ||
-    order.createdBy ||
-    order.confirmedBy ||
-    order.handledBy ||
-    null;
+const getSalesPerson = (order) => order.assignedTo || order.approvedBy || null;
+
+const isConfirmedOrder = (order) => ['CONFIRMED', 'SHIPPING', 'COMPLETED'].includes(order.status);
 
 export default function Dashboard() {
     const { orders, products, users, loading, fetchOverview } = useDashboardStore();
@@ -138,8 +132,8 @@ export default function Dashboard() {
                 title: product.title,
                 category: product.category?.name,
                 stock: Number(product.stock || 0),
-                sold: Number(product.soldCount || 0),
-                revenue: Number(product.soldCount || 0) * Number(product.price || 0)
+                sold: 0,
+                revenue: 0
             });
         });
 
@@ -149,22 +143,28 @@ export default function Dashboard() {
             }
 
             order.items?.forEach((item) => {
-                const current = soldMap.get(item.productId) || {
-                    id: item.productId,
-                    title: item.title,
-                    category: '-',
-                    stock: 0,
+                const productId = item.product?.id || item.productId || item.id;
+
+                if (!productId) return;
+
+                const current = soldMap.get(productId) || {
+                    id: productId,
+                    title: item.product?.title || item.title,
+                    category: item.product?.category?.name || '-',
+                    stock: Number(item.product?.stock || 0),
                     sold: 0,
                     revenue: 0
                 };
 
                 current.sold += Number(item.quantity || 0);
                 current.revenue += Number(item.subtotal || 0);
-                soldMap.set(item.productId, current);
+
+                soldMap.set(productId, current);
             });
         });
 
         return Array.from(soldMap.values())
+            .filter((product) => product.sold > 0)
             .sort((a, b) => b.sold - a.sold || b.revenue - a.revenue)
             .slice(0, 6);
     }, [orders, products]);
@@ -188,37 +188,50 @@ export default function Dashboard() {
         const staffMap = new Map();
 
         users
-            .filter((user) => staffRoles.includes(user.role))
+            .filter((user) => ['ADMIN', 'MANAGER', 'EMPLOYEE'].includes(user.role))
             .forEach((user) => {
                 staffMap.set(user.id, {
                     id: user.id,
                     name: user.fullName,
                     role: user.role,
-                    orders: 0,
-                    revenue: 0
+                    confirmedOrders: 0,
+                    completedOrders: 0,
+                    revenue: 0,
+                    completedRevenue: 0
                 });
             });
 
-        let hasAssignedOrders = false;
+        let hasConfirmedOrders = false;
 
         orders.forEach((order) => {
+            if (!isConfirmedOrder(order)) {
+                return;
+            }
+
             const staff = getSalesPerson(order);
-            const staffId = staff?.id || staff?.userId || staff;
+            const staffId = staff?.id;
 
             if (!staffId || !staffMap.has(staffId)) {
                 return;
             }
 
-            hasAssignedOrders = true;
+            hasConfirmedOrders = true;
+
             const current = staffMap.get(staffId);
-            current.orders += 1;
-            current.revenue += getOrderRevenue(order);
+
+            current.confirmedOrders += 1;
+            current.revenue += Number(order.finalAmount || 0);
+
+            if (order.status === 'COMPLETED') {
+                current.completedOrders += 1;
+                current.completedRevenue += Number(order.finalAmount || 0);
+            }
         });
 
         return {
-            hasAssignedOrders,
+            hasConfirmedOrders,
             items: Array.from(staffMap.values())
-                .sort((a, b) => b.revenue - a.revenue || b.orders - a.orders)
+                .sort((a, b) => b.revenue - a.revenue || b.confirmedOrders - a.confirmedOrders)
                 .slice(0, 6)
         };
     }, [orders, users]);
@@ -328,7 +341,7 @@ export default function Dashboard() {
                             <div className={cx('empty')}>Chưa có dữ liệu bán hàng.</div>
                         ) : (
                             topProducts.map((product, index) => (
-                                <div className={cx('rankItem')} key={product.id}>
+                                <div className={cx('rankItem')} key={`${product.id}-${product.title}`}>
                                     <span className={cx('rank')}>{index + 1}</span>
                                     <div>
                                         <strong>{product.title}</strong>
@@ -385,9 +398,9 @@ export default function Dashboard() {
                     <div>
                         <h2>Hiệu suất nhân viên bán hàng</h2>
                         <p>
-                            {salesStaffStats.hasAssignedOrders
-                                ? 'Dựa trên đơn hàng có thông tin nhân viên phụ trách.'
-                                : 'Backend hiện chưa gắn đơn hàng với nhân viên phụ trách, nên chỉ hiển thị danh sách nhân sự.'}
+                            {salesStaffStats.hasConfirmedOrders
+                                ? 'Dựa trên các đơn đã xác nhận, dùng để tham chiếu tính lương/thưởng sau này.'
+                                : 'Chưa có đơn hàng đã xác nhận gắn với nhân viên phụ trách.'}
                         </p>
                     </div>
                     <span className={cx('pill')}>{stats.staffCount} nhân sự</span>
@@ -404,12 +417,20 @@ export default function Dashboard() {
                                     <span>{staff.role}</span>
                                 </div>
                                 <div>
-                                    <strong>{formatNumber(staff.orders)}</strong>
-                                    <span>đơn phụ trách</span>
+                                    <strong>{formatNumber(staff.confirmedOrders)}</strong>
+                                    <span>đơn đã xác nhận</span>
+                                </div>
+                                <div>
+                                    <strong>{formatNumber(staff.completedOrders)}</strong>
+                                    <span>đơn hoàn thành</span>
                                 </div>
                                 <div>
                                     <strong>{formatMoney(staff.revenue)}</strong>
-                                    <span>doanh số phụ trách</span>
+                                    <span>doanh số đã xác nhận</span>
+                                </div>
+                                <div>
+                                    <strong>{formatMoney(staff.completedRevenue)}</strong>
+                                    <span>doanh số hoàn thành</span>
                                 </div>
                             </div>
                         ))
