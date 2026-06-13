@@ -19,7 +19,8 @@ class OrderService {
             id: user.publicId,
             fullName: user.fullName,
             email: user.email,
-            phone: user.phone
+            phone: user.phone,
+            role: user.role
         };
     }
 
@@ -98,6 +99,8 @@ class OrderService {
         return {
             id: order.publicId,
             user: this.toPublicUser(order.user),
+            approvedBy: this.toPublicUser(order.approvedBy),
+            assignedTo: this.toPublicUser(order.assignedTo),
             address: this.toPublicAddress(order.address),
             paymentMethod: this.toPublicPaymentMethod(order.paymentMethod),
             coupon: this.toPublicCoupon(order.coupon),
@@ -108,8 +111,26 @@ class OrderService {
             finalAmount: order.finalAmount,
             note: order.note,
             items: order.items?.map((item) => this.toPublicOrderItem(item)) || [],
+            approvedAt: order.approvedAt,
+            assignedAt: order.assignedAt,
             createdAt: order.createdAt,
             updatedAt: order.updatedAt
+        };
+    }
+
+    orderInclude() {
+        return {
+            user: true,
+            approvedBy: true,
+            assignedTo: true,
+            address: true,
+            paymentMethod: true,
+            coupon: true,
+            items: {
+                include: {
+                    product: true
+                }
+            }
         };
     }
 
@@ -277,20 +298,6 @@ class OrderService {
         return this.toPublicOrder(order);
     }
 
-    orderInclude() {
-        return {
-            user: true,
-            address: true,
-            paymentMethod: true,
-            coupon: true,
-            items: {
-                include: {
-                    product: true
-                }
-            }
-        };
-    }
-
     async getMyOrders(userId) {
         const orders = await prisma.order.findMany({
             where: { userId },
@@ -326,7 +333,7 @@ class OrderService {
         return orders.map((order) => this.toPublicOrder(order));
     }
 
-    async updateStatus(orderId, status) {
+    async updateStatus(orderId, status, actorId) {
         const nextStatus = this.normalizeStatus(status);
 
         validateOrderStatusPayload(nextStatus);
@@ -345,12 +352,12 @@ class OrderService {
         const oldStatus = order.status;
 
         if (oldStatus === nextStatus) {
-            return this.toPublicOrder(
-                await prisma.order.findUnique({
-                    where: { id: order.id },
-                    include: this.orderInclude()
-                })
-            );
+            const currentOrder = await prisma.order.findUnique({
+                where: { id: order.id },
+                include: this.orderInclude()
+            });
+
+            return this.toPublicOrder(currentOrder);
         }
 
         const updatedOrder = await prisma.$transaction(async (tx) => {
@@ -390,9 +397,20 @@ class OrderService {
                 }
             }
 
+            const updateData = {
+                status: nextStatus
+            };
+
+            if (nextStatus === 'CONFIRMED' && !order.approvedById) {
+                updateData.approvedById = actorId;
+                updateData.approvedAt = new Date();
+                updateData.assignedToId = actorId;
+                updateData.assignedAt = new Date();
+            }
+
             return tx.order.update({
                 where: { id: order.id },
-                data: { status: nextStatus },
+                data: updateData,
                 include: this.orderInclude()
             });
         });
@@ -424,6 +442,97 @@ class OrderService {
         return this.toPublicOrder(updatedOrder);
     }
 
+    async assignOrder(orderId, employeeId) {
+        const order = await prisma.order.findUnique({
+            where: { publicId: orderId }
+        });
+
+        if (!order) {
+            throw new AppError(404, 'Không tìm thấy đơn hàng');
+        }
+
+        const employee = await prisma.user.findUnique({
+            where: { publicId: employeeId }
+        });
+
+        if (!employee) {
+            throw new AppError(404, 'Không tìm thấy nhân viên');
+        }
+
+        if (!['ADMIN', 'MANAGER', 'EMPLOYEE'].includes(employee.role)) {
+            throw new AppError(400, 'Người được phân công không phải nhân viên');
+        }
+
+        const updatedOrder = await prisma.order.update({
+            where: { id: order.id },
+            data: {
+                assignedToId: employee.id,
+                assignedAt: new Date()
+            },
+            include: this.orderInclude()
+        });
+
+        return this.toPublicOrder(updatedOrder);
+    }
+
+    async approveOrder(orderId, approverId) {
+        const order = await prisma.order.findUnique({
+            where: { publicId: orderId }
+        });
+
+        if (!order) {
+            throw new AppError(404, 'Không tìm thấy đơn hàng');
+        }
+
+        if (order.approvedById) {
+            throw new AppError(400, 'Đơn hàng đã được duyệt');
+        }
+
+        const approver = await prisma.user.findUnique({
+            where: { id: approverId }
+        });
+
+        if (!approver) {
+            throw new AppError(404, 'Không tìm thấy người duyệt');
+        }
+
+        if (!['ADMIN', 'MANAGER'].includes(approver.role)) {
+            throw new AppError(403, 'Bạn không có quyền duyệt đơn hàng');
+        }
+
+        const updatedOrder = await prisma.order.update({
+            where: { id: order.id },
+            data: {
+                approvedById: approver.id,
+                approvedAt: new Date()
+            },
+            include: this.orderInclude()
+        });
+
+        return this.toPublicOrder(updatedOrder);
+    }
+
+    async unassignOrder(orderId) {
+        const order = await prisma.order.findUnique({
+            where: { publicId: orderId }
+        });
+
+        if (!order) {
+            throw new AppError(404, 'Không tìm thấy đơn hàng');
+        }
+
+        const updatedOrder = await prisma.order.update({
+            where: { id: order.id },
+            data: {
+                assignedToId: null,
+                assignedAt: null
+            },
+            include: this.orderInclude()
+        });
+
+        return this.toPublicOrder(updatedOrder);
+    }
+
     async cancelMyOrder(userId, orderId) {
         const order = await prisma.order.findFirst({
             where: {
@@ -441,15 +550,6 @@ class OrderService {
 
         if (!['PENDING', 'CONFIRMED'].includes(order.status)) {
             throw new AppError(400, 'Không thể hủy đơn hàng ở trạng thái hiện tại');
-        }
-
-        if (order.status === 'CANCELLED') {
-            return this.toPublicOrder(
-                await prisma.order.findUnique({
-                    where: { id: order.id },
-                    include: this.orderInclude()
-                })
-            );
         }
 
         const updatedOrder = await prisma.$transaction(async (tx) => {

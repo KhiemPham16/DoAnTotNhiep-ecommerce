@@ -32,7 +32,10 @@ export const orderService = {
     },
 
     updateOrderStatus: async (id, status) => {
-        const res = await api.patch(`/orders/${id}/status`, { status });
+        const res = await api.patch(`/orders/${id}/status`, {
+            status
+        });
+
         return res.data;
     },
 
@@ -41,6 +44,24 @@ export const orderService = {
             paymentStatus
         });
 
+        return res.data;
+    },
+
+    approveOrder: async (id) => {
+        const res = await api.patch(`/orders/${id}/approve`);
+        return res.data;
+    },
+
+    assignOrder: async (id, employeeId) => {
+        const res = await api.patch(`/orders/${id}/assign`, {
+            employeeId
+        });
+
+        return res.data;
+    },
+
+    unassignOrder: async (id) => {
+        const res = await api.patch(`/orders/${id}/unassign`);
         return res.data;
     }
 };
