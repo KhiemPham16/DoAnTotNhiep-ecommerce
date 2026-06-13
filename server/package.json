@@ -11,7 +11,8 @@
     },
     "scripts": {
         "start": "node src/server.js",
-        "dev": "cross-env NODE_ENV=development nodemon ./src/server.js",
+        "dev": "concurrently \"cross-env NODE_ENV=development nodemon ./src/server.js\" \"npm run worker:mail\"",
+        "worker:mail": "node ./src/workers/mail.worker.js",
         "prisma:generate": "prisma generate",
         "prisma:migrate": "prisma migrate dev",
         "prisma:seed": "node prisma/seed.js"
@@ -23,12 +24,14 @@
         "@prisma/adapter-mariadb": "^7.8.0",
         "@prisma/client": "^7.8.0",
         "bcrypt": "^6.0.0",
+        "bullmq": "^5.78.0",
         "cookie-parser": "^1.4.7",
         "cors": "^2.8.6",
         "ejs": "^5.0.2",
         "express": "^5.2.1",
         "express-rate-limit": "^8.5.2",
         "helmet": "^8.2.0",
+        "ioredis": "^5.11.1",
         "jsonwebtoken": "^9.0.3",
         "module-alias": "^2.3.4",
         "mongoose": "^9.6.2",
@@ -39,6 +42,7 @@
         "swagger-ui-express": "^5.0.1"
     },
     "devDependencies": {
+        "concurrently": "^10.0.3",
         "cross-env": "^10.1.0",
         "dotenv": "^17.4.2",
         "morgan": "^1.10.1",

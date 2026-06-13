@@ -40,6 +40,12 @@ async function authenticate(req, res, next) {
         const user = await prisma.user.findUnique({
             where: {
                 id: payload.userId
+            },
+            select: {
+                id: true,
+                publicId: true,
+                role: true,
+                deletedAt: true
             }
         });
 
@@ -47,9 +53,13 @@ async function authenticate(req, res, next) {
             return res.error(401, 'Người dùng không tồn tại');
         }
 
-        req.user = user;
+        req.user = {
+            id: user.id, // Int nội bộ
+            publicId: user.publicId,
+            role: user.role
+        };
 
-        next();
+        return next();
     } catch (error) {
         next(error);
     }

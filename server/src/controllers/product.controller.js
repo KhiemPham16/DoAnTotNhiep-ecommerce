@@ -17,7 +17,7 @@ class ProductController {
 
     async show(req, res, next) {
         try {
-            const product = await productService.getProductById(req.params.id);
+            const product = await productService.getProductBySlug(req.params.slug);
 
             return res.status(200).json({
                 success: true,

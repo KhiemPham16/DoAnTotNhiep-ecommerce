@@ -5,18 +5,33 @@ const { generateUniqueCategorySlug } = require('~/utils/slugify');
 const { validateCreateCategoryPayload } = require('~/validators/category.validator');
 
 class CategoryService {
+    toPublicCategory(category) {
+        if (!category) return null;
+
+        return {
+            id: category.publicId,
+            name: category.name,
+            slug: category.slug,
+            isActive: category.isActive,
+            createdAt: category.createdAt,
+            updatedAt: category.updatedAt
+        };
+    }
+
     async getCategories() {
-        return prisma.category.findMany({
+        const categories = await prisma.category.findMany({
             orderBy: {
                 createdAt: 'desc'
             }
         });
+
+        return categories.map((category) => this.toPublicCategory(category));
     }
 
     async getCategoryById(categoryId) {
         const category = await prisma.category.findUnique({
             where: {
-                id: categoryId
+                publicId: categoryId
             }
         });
 
@@ -24,15 +39,17 @@ class CategoryService {
             throw new AppError(404, 'Danh mục không tồn tại');
         }
 
-        return category;
+        return this.toPublicCategory(category);
     }
 
     async createCategory(name) {
         validateCreateCategoryPayload(name);
 
+        const normalizedName = name.trim();
+
         const existed = await prisma.category.findUnique({
             where: {
-                name
+                name: normalizedName
             }
         });
 
@@ -40,20 +57,22 @@ class CategoryService {
             throw new AppError(409, 'Danh mục đã tồn tại');
         }
 
-        const slug = await generateUniqueCategorySlug(name);
+        const slug = await generateUniqueCategorySlug(normalizedName);
 
-        return prisma.category.create({
+        const category = await prisma.category.create({
             data: {
-                name,
+                name: normalizedName,
                 slug
             }
         });
+
+        return this.toPublicCategory(category);
     }
 
     async updateCategory(categoryId, data) {
         const category = await prisma.category.findUnique({
             where: {
-                id: categoryId
+                publicId: categoryId
             }
         });
 
@@ -63,40 +82,46 @@ class CategoryService {
 
         const updateData = {};
 
-        if (data.name && data.name !== category.name) {
-            const existed = await prisma.category.findFirst({
-                where: {
-                    name: data.name,
-                    NOT: {
-                        id: categoryId
+        if (data.name) {
+            const normalizedName = data.name.trim();
+
+            if (normalizedName !== category.name) {
+                const existed = await prisma.category.findFirst({
+                    where: {
+                        name: normalizedName,
+                        NOT: {
+                            id: category.id
+                        }
                     }
+                });
+
+                if (existed) {
+                    throw new AppError(409, 'Danh mục đã tồn tại');
                 }
-            });
 
-            if (existed) {
-                throw new AppError(409, 'Danh mục đã tồn tại');
+                updateData.name = normalizedName;
+                updateData.slug = await generateUniqueCategorySlug(normalizedName);
             }
-
-            updateData.name = data.name;
-            updateData.slug = await generateUniqueCategorySlug(data.name);
         }
 
         if (data.isActive !== undefined) {
-            updateData.isActive = data.isActive;
+            updateData.isActive = Boolean(data.isActive);
         }
 
-        return prisma.category.update({
+        const updatedCategory = await prisma.category.update({
             where: {
-                id: categoryId
+                id: category.id
             },
             data: updateData
         });
+
+        return this.toPublicCategory(updatedCategory);
     }
 
     async deleteCategory(categoryId) {
         const category = await prisma.category.findUnique({
             where: {
-                id: categoryId
+                publicId: categoryId
             }
         });
 
@@ -106,7 +131,7 @@ class CategoryService {
 
         const productCount = await prisma.product.count({
             where: {
-                categoryId
+                categoryId: category.id
             }
         });
 
@@ -119,7 +144,7 @@ class CategoryService {
 
         await prisma.category.delete({
             where: {
-                id: categoryId
+                id: category.id
             }
         });
 

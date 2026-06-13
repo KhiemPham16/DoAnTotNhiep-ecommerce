@@ -1,6 +1,7 @@
 const authService = require('~/services/auth.service');
 const authConfig = require('~/configs/auth.config');
 const { parseExpiresInToMs } = require('~/utils/expiresIn');
+
 class AuthController {
     async register(req, res, next) {
         try {
@@ -9,7 +10,7 @@ class AuthController {
             await authService.register(fullName, email, password, phone);
 
             return res.status(201).json({
-                message: 'Đăng ký thành công'
+                message: 'Đăng ký thành công. Vui lòng kiểm tra email để xác thực tài khoản.'
             });
         } catch (error) {
             next(error);
@@ -44,7 +45,7 @@ class AuthController {
             });
 
             return res.status(200).json({
-                message: `Người dùng ${result.user.fullName} đã đăng nhập thành công!`,
+                message: `Người dùng đã đăng nhập thành công!`,
                 accessToken: result.accessToken
             });
         } catch (error) {
@@ -89,7 +90,7 @@ class AuthController {
             await authService.forgotPassword(email);
 
             return res.status(200).json({
-                message: 'OTP đặt lại mật khẩu đã được gửi'
+                message: 'Nếu email hợp lệ, OTP đặt lại mật khẩu sẽ được gửi trong ít phút'
             });
         } catch (error) {
             next(error);
@@ -113,7 +114,6 @@ class AuthController {
     async changePassword(req, res, next) {
         try {
             const userId = req.user.id;
-
             const { currentPassword, newPassword, confirmNewPassword } = req.body;
 
             await authService.changePassword(userId, currentPassword, newPassword, confirmNewPassword);

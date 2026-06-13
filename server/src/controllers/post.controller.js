@@ -18,7 +18,7 @@ class PostController {
         try {
             const posts = await postService.getAdminPosts();
 
-            res.json({
+            return res.status(200).json({
                 success: true,
                 data: posts
             });

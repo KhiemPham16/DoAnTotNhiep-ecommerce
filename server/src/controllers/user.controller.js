@@ -111,7 +111,7 @@ class UserController {
 
     async deleteMe(req, res, next) {
         try {
-            await userService.deleteUser(req.user.id);
+            await userService.deleteMe(req.user.id);
 
             return res.status(200).json({
                 success: true,

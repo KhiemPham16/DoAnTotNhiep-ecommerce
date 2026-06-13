@@ -12,6 +12,107 @@ class OrderService {
         return status.toUpperCase();
     }
 
+    toPublicUser(user) {
+        if (!user) return null;
+
+        return {
+            id: user.publicId,
+            fullName: user.fullName,
+            email: user.email,
+            phone: user.phone
+        };
+    }
+
+    toPublicProduct(product) {
+        if (!product) return null;
+
+        return {
+            id: product.publicId,
+            title: product.title,
+            slug: product.slug,
+            thumbnail: product.thumbnail
+        };
+    }
+
+    toPublicAddress(address) {
+        if (!address) return null;
+
+        return {
+            id: address.publicId,
+            receiverName: address.receiverName,
+            receiverPhone: address.receiverPhone,
+            provinceCity: address.provinceCity,
+            ward: address.ward,
+            specificAddress: address.specificAddress,
+            isDefault: address.isDefault
+        };
+    }
+
+    toPublicPaymentMethod(paymentMethod) {
+        if (!paymentMethod) return null;
+
+        return {
+            id: paymentMethod.publicId,
+            name: paymentMethod.name,
+            code: paymentMethod.code,
+            description: paymentMethod.description,
+            isActive: paymentMethod.isActive
+        };
+    }
+
+    toPublicCoupon(coupon) {
+        if (!coupon) return null;
+
+        return {
+            id: coupon.publicId,
+            couponType: coupon.couponType,
+            code: coupon.code,
+            type: coupon.type,
+            value: coupon.value,
+            minOrderAmount: coupon.minOrderAmount,
+            maxDiscountAmount: coupon.maxDiscountAmount,
+            usageLimit: coupon.usageLimit,
+            usedCount: coupon.usedCount,
+            startsAt: coupon.startsAt,
+            expiresAt: coupon.expiresAt,
+            isActive: coupon.isActive
+        };
+    }
+
+    toPublicOrderItem(item) {
+        if (!item) return null;
+
+        return {
+            id: item.publicId,
+            title: item.title,
+            price: item.price,
+            quantity: item.quantity,
+            subtotal: item.subtotal,
+            product: this.toPublicProduct(item.product)
+        };
+    }
+
+    toPublicOrder(order) {
+        if (!order) return null;
+
+        return {
+            id: order.publicId,
+            user: this.toPublicUser(order.user),
+            address: this.toPublicAddress(order.address),
+            paymentMethod: this.toPublicPaymentMethod(order.paymentMethod),
+            coupon: this.toPublicCoupon(order.coupon),
+            status: order.status,
+            paymentStatus: order.paymentStatus,
+            discountAmount: order.discountAmount,
+            totalAmount: order.totalAmount,
+            finalAmount: order.finalAmount,
+            note: order.note,
+            items: order.items?.map((item) => this.toPublicOrderItem(item)) || [],
+            createdAt: order.createdAt,
+            updatedAt: order.updatedAt
+        };
+    }
+
     async createOrder(userId, data) {
         const { addressId, paymentMethodId, items, couponCode, note } = data;
 
@@ -19,7 +120,7 @@ class OrderService {
 
         const address = await prisma.address.findFirst({
             where: {
-                id: addressId,
+                publicId: addressId,
                 userId
             }
         });
@@ -30,7 +131,7 @@ class OrderService {
 
         const paymentMethod = await prisma.paymentMethod.findFirst({
             where: {
-                id: paymentMethodId,
+                publicId: paymentMethodId,
                 isActive: true
             }
         });
@@ -45,7 +146,7 @@ class OrderService {
         for (const item of items) {
             const product = await prisma.product.findFirst({
                 where: {
-                    id: item.productId,
+                    publicId: item.productId,
                     isActive: true,
                     deletedAt: null
                 }
@@ -129,18 +230,15 @@ class OrderService {
             const createdOrder = await tx.order.create({
                 data: {
                     userId,
-                    addressId,
-                    paymentMethodId,
+                    addressId: address.id,
+                    paymentMethodId: paymentMethod.id,
                     couponId: coupon ? coupon.id : null,
-
                     status: 'PENDING',
                     paymentStatus: 'UNPAID',
-
                     discountAmount,
                     totalAmount,
                     finalAmount,
                     note,
-
                     items: {
                         create: orderItems.map((item) => ({
                             productId: item.productId,
@@ -151,39 +249,24 @@ class OrderService {
                         }))
                     }
                 },
-                include: {
-                    items: true,
-                    address: true,
-                    paymentMethod: true,
-                    coupon: true
-                }
+                include: this.orderInclude()
             });
 
             for (const item of orderItems) {
                 await tx.product.update({
-                    where: {
-                        id: item.productId
-                    },
+                    where: { id: item.productId },
                     data: {
-                        stock: {
-                            decrement: item.quantity
-                        },
-                        soldCount: {
-                            increment: item.quantity
-                        }
+                        stock: { decrement: item.quantity },
+                        soldCount: { increment: item.quantity }
                     }
                 });
             }
 
             if (coupon) {
                 await tx.coupon.update({
-                    where: {
-                        id: coupon.id
-                    },
+                    where: { id: coupon.id },
                     data: {
-                        usedCount: {
-                            increment: 1
-                        }
+                        usedCount: { increment: 1 }
                     }
                 });
             }
@@ -191,99 +274,56 @@ class OrderService {
             return createdOrder;
         });
 
-        return order;
+        return this.toPublicOrder(order);
+    }
+
+    orderInclude() {
+        return {
+            user: true,
+            address: true,
+            paymentMethod: true,
+            coupon: true,
+            items: {
+                include: {
+                    product: true
+                }
+            }
+        };
     }
 
     async getMyOrders(userId) {
-        return prisma.order.findMany({
-            where: {
-                userId
-            },
-            orderBy: {
-                createdAt: 'desc'
-            },
-            include: {
-                items: {
-                    include: {
-                        product: {
-                            select: {
-                                id: true,
-                                title: true,
-                                slug: true,
-                                thumbnail: true
-                            }
-                        }
-                    }
-                },
-                paymentMethod: true,
-                coupon: true
-            }
+        const orders = await prisma.order.findMany({
+            where: { userId },
+            orderBy: { createdAt: 'desc' },
+            include: this.orderInclude()
         });
+
+        return orders.map((order) => this.toPublicOrder(order));
     }
 
     async getOrderById(userId, orderId) {
         const order = await prisma.order.findFirst({
             where: {
-                id: orderId,
+                publicId: orderId,
                 userId
             },
-            include: {
-                items: {
-                    include: {
-                        product: {
-                            select: {
-                                id: true,
-                                title: true,
-                                slug: true,
-                                thumbnail: true
-                            }
-                        }
-                    }
-                },
-                address: true,
-                paymentMethod: true,
-                coupon: true
-            }
+            include: this.orderInclude()
         });
 
         if (!order) {
             throw new AppError(404, 'Đơn hàng không tồn tại');
         }
 
-        return order;
+        return this.toPublicOrder(order);
     }
 
     async getOrders() {
-        return prisma.order.findMany({
-            orderBy: {
-                createdAt: 'desc'
-            },
-            include: {
-                user: {
-                    select: {
-                        id: true,
-                        fullName: true,
-                        email: true,
-                        phone: true
-                    }
-                },
-                address: true,
-                paymentMethod: true,
-                coupon: true,
-                items: {
-                    include: {
-                        product: {
-                            select: {
-                                id: true,
-                                title: true,
-                                slug: true,
-                                thumbnail: true
-                            }
-                        }
-                    }
-                }
-            }
+        const orders = await prisma.order.findMany({
+            orderBy: { createdAt: 'desc' },
+            include: this.orderInclude()
         });
+
+        return orders.map((order) => this.toPublicOrder(order));
     }
 
     async updateStatus(orderId, status) {
@@ -291,12 +331,8 @@ class OrderService {
 
         validateOrderStatusPayload(nextStatus);
 
-        const allowedStatus = ['PENDING', 'CONFIRMED', 'SHIPPING', 'COMPLETED', 'CANCELLED'];
-
         const order = await prisma.order.findUnique({
-            where: {
-                id: orderId
-            },
+            where: { publicId: orderId },
             include: {
                 items: true
             }
@@ -309,23 +345,22 @@ class OrderService {
         const oldStatus = order.status;
 
         if (oldStatus === nextStatus) {
-            return order;
+            return this.toPublicOrder(
+                await prisma.order.findUnique({
+                    where: { id: order.id },
+                    include: this.orderInclude()
+                })
+            );
         }
 
-        return prisma.$transaction(async (tx) => {
+        const updatedOrder = await prisma.$transaction(async (tx) => {
             if (nextStatus === 'CANCELLED' && oldStatus !== 'CANCELLED') {
                 for (const item of order.items) {
                     await tx.product.update({
-                        where: {
-                            id: item.productId
-                        },
+                        where: { id: item.productId },
                         data: {
-                            stock: {
-                                increment: item.quantity
-                            },
-                            soldCount: {
-                                decrement: item.quantity
-                            }
+                            stock: { increment: item.quantity },
+                            soldCount: { decrement: item.quantity }
                         }
                     });
                 }
@@ -334,9 +369,7 @@ class OrderService {
             if (oldStatus === 'CANCELLED' && nextStatus !== 'CANCELLED') {
                 for (const item of order.items) {
                     const product = await tx.product.findUnique({
-                        where: {
-                            id: item.productId
-                        }
+                        where: { id: item.productId }
                     });
 
                     if (!product) {
@@ -348,35 +381,23 @@ class OrderService {
                     }
 
                     await tx.product.update({
-                        where: {
-                            id: item.productId
-                        },
+                        where: { id: item.productId },
                         data: {
-                            stock: {
-                                decrement: item.quantity
-                            },
-                            soldCount: {
-                                increment: item.quantity
-                            }
+                            stock: { decrement: item.quantity },
+                            soldCount: { increment: item.quantity }
                         }
                     });
                 }
             }
 
             return tx.order.update({
-                where: {
-                    id: orderId
-                },
-                data: {
-                    status: nextStatus
-                },
-                include: {
-                    items: true,
-                    paymentMethod: true,
-                    coupon: true
-                }
+                where: { id: order.id },
+                data: { status: nextStatus },
+                include: this.orderInclude()
             });
         });
+
+        return this.toPublicOrder(updatedOrder);
     }
 
     async updatePaymentStatus(orderId, paymentStatus) {
@@ -384,57 +405,29 @@ class OrderService {
 
         validatePaymentStatusPayload(nextStatus);
 
-        const allowedStatus = ['UNPAID', 'PAID', 'FAILED', 'REFUNDED'];
-
         const order = await prisma.order.findUnique({
-            where: {
-                id: orderId
-            }
+            where: { publicId: orderId }
         });
 
         if (!order) {
             throw new AppError(404, 'Đơn hàng không tồn tại');
         }
 
-        return prisma.order.update({
-            where: {
-                id: orderId
-            },
+        const updatedOrder = await prisma.order.update({
+            where: { id: order.id },
             data: {
                 paymentStatus: nextStatus
             },
-            include: {
-                user: {
-                    select: {
-                        id: true,
-                        fullName: true,
-                        email: true,
-                        phone: true
-                    }
-                },
-                address: true,
-                paymentMethod: true,
-                coupon: true,
-                items: {
-                    include: {
-                        product: {
-                            select: {
-                                id: true,
-                                title: true,
-                                slug: true,
-                                thumbnail: true
-                            }
-                        }
-                    }
-                }
-            }
+            include: this.orderInclude()
         });
+
+        return this.toPublicOrder(updatedOrder);
     }
 
     async cancelMyOrder(userId, orderId) {
         const order = await prisma.order.findFirst({
             where: {
-                id: orderId,
+                publicId: orderId,
                 userId
             },
             include: {
@@ -451,41 +444,36 @@ class OrderService {
         }
 
         if (order.status === 'CANCELLED') {
-            return order;
+            return this.toPublicOrder(
+                await prisma.order.findUnique({
+                    where: { id: order.id },
+                    include: this.orderInclude()
+                })
+            );
         }
 
-        return prisma.$transaction(async (tx) => {
+        const updatedOrder = await prisma.$transaction(async (tx) => {
             for (const item of order.items) {
                 await tx.product.update({
-                    where: {
-                        id: item.productId
-                    },
+                    where: { id: item.productId },
                     data: {
-                        stock: {
-                            increment: item.quantity
-                        },
-                        soldCount: {
-                            decrement: item.quantity
-                        }
+                        stock: { increment: item.quantity },
+                        soldCount: { decrement: item.quantity }
                     }
                 });
             }
 
             return tx.order.update({
-                where: {
-                    id: orderId
-                },
+                where: { id: order.id },
                 data: {
                     status: 'CANCELLED',
                     paymentStatus: 'REFUNDED'
                 },
-                include: {
-                    items: true,
-                    paymentMethod: true,
-                    coupon: true
-                }
+                include: this.orderInclude()
             });
         });
+
+        return this.toPublicOrder(updatedOrder);
     }
 }
 

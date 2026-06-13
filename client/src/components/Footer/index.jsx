@@ -1,29 +1,25 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import classNames from 'classnames/bind';
 import { FaEnvelope, FaFacebook, FaPhoneAlt } from 'react-icons/fa';
 
-import { categoryService } from '~/services/categoryService';
+import { useCategoryStore } from '~/stores/useCategoryStore';
 
 import styles from './Footer.module.scss';
 
 const cx = classNames.bind(styles);
 
 export default function Footer() {
-    const [categories, setCategories] = useState([]);
+    const { categories, fetchCategories } = useCategoryStore();
 
     useEffect(() => {
-        const fetchCategories = async () => {
-            try {
-                const response = await categoryService.getCategories();
-                setCategories((response.data || []).filter((category) => category.isActive).slice(0, 6));
-            } catch (error) {
-                console.error(error);
-            }
-        };
-
         fetchCategories();
     }, []);
+
+    const activeCategories = useMemo(
+        () => categories.filter((category) => category.isActive).slice(0, 6),
+        [categories]
+    );
 
     return (
         <footer className={cx('footer')}>
@@ -41,6 +37,7 @@ export default function Footer() {
                     <Link className={cx('footer-logo')} to="/">
                         Book<span className={cx('logo-accent')}>STORY</span>
                     </Link>
+
                     <p className={cx('footer-desc')}>
                         Không gian lan tỏa tri thức, mang đến những cuốn sách chất lượng và tinh hoa nhất cho độc giả.
                     </p>
@@ -66,16 +63,19 @@ export default function Footer() {
 
                 <div className={cx('footer-column')}>
                     <h3>Liên hệ</h3>
+
                     <div className={cx('footer-socials')}>
                         <a href="tel:0123456789">
                             <FaPhoneAlt /> Hotline
                         </a>
                     </div>
+
                     <div className={cx('footer-socials')} style={{ marginTop: '14px' }}>
                         <a href="https://facebook.com" target="_blank" rel="noreferrer">
                             <FaFacebook /> Facebook
                         </a>
                     </div>
+
                     <div className={cx('footer-socials')} style={{ marginTop: '14px' }}>
                         <a href="mailto:contact@bookstory.com">
                             <FaEnvelope /> Email
@@ -85,13 +85,14 @@ export default function Footer() {
 
                 <div className={cx('footer-column')}>
                     <h3>Danh mục</h3>
+
                     <ul>
-                        {categories.length === 0 ? (
+                        {activeCategories.length === 0 ? (
                             <li>
                                 <Link to="/category">&gt; Tất cả sách</Link>
                             </li>
                         ) : (
-                            categories.map((category) => (
+                            activeCategories.map((category) => (
                                 <li key={category.id}>
                                     <Link to={`/category?categoryId=${category.id}`}>&gt; {category.name}</Link>
                                 </li>
