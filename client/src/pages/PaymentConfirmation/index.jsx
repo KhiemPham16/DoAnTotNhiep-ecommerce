@@ -1,6 +1,3 @@
-import { useEffect } from 'react';
-import { useCartStore } from '~/stores/useCartStore';
-import { useCouponStore } from '~/stores/useCouponStore';
 import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import classNames from 'classnames/bind';
 import { FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
@@ -12,9 +9,6 @@ const cx = classNames.bind(styles);
 const formatPrice = (value) => Number(value || 0).toLocaleString('vi-VN') + 'đ';
 
 export default function Payments() {
-    const { clearCart } = useCartStore();
-    const { clearCoupon } = useCouponStore();
-
     const location = useLocation();
     const [searchParams] = useSearchParams();
 
@@ -26,13 +20,6 @@ export default function Payments() {
     const displayOrderId = order?.id || order?.orderId || orderIdFromQuery;
 
     const isPaymentError = payment === 'error' || payment === 'cancel';
-
-    useEffect(() => {
-        if (payment === 'success') {
-            clearCart();
-            clearCoupon();
-        }
-    }, [payment, clearCart, clearCoupon]);
 
     return (
         <div className={cx('wrapper')}>

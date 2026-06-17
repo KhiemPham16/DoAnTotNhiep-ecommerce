@@ -46,7 +46,7 @@ export default function Categories() {
 
     useEffect(() => {
         fetchCategories();
-    }, []);
+    }, [fetchCategories]);
 
     const filteredCategories = useMemo(() => {
         const search = debouncedKeyword.trim().toLowerCase();
@@ -55,7 +55,8 @@ export default function Categories() {
             const matchesKeyword =
                 !search ||
                 [category.name, category.slug].filter(Boolean).some((value) => value.toLowerCase().includes(search));
-            const matchesStatus = statusFilter === 'all' || String(Boolean(category.isActive)) === statusFilter;
+            const matchesStatus =
+                statusFilter === 'all' || String(Boolean(category.isActive)) === statusFilter;
 
             return matchesKeyword && matchesStatus;
         });
@@ -124,7 +125,9 @@ export default function Categories() {
             <div className={cx('header')}>
                 <div>
                     <div className={cx('title')}>Quản lý danh mục</div>
-                    <div className={cx('subtitle')}>Thêm mới, cập nhật, xóa và xem danh sách danh mục sản phẩm.</div>
+                    <div className={cx('subtitle')}>
+                        Thêm mới, cập nhật, xóa và xem danh sách danh mục sản phẩm.
+                    </div>
                 </div>
 
                 <button className={cx('primaryBtn')} type="button" onClick={openCreateModal}>
