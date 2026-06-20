@@ -72,12 +72,14 @@ const getSalesScore = (product) =>
     );
 
 function ProductCard({ product, compact = false }) {
+    const productPath = `/product/${product.slug}`;
+
     return (
         <article className={cx('book-card', { compact })}>
             <button className={cx('wishlist-btn')} type="button" aria-label="Yêu thích">
                 <FiHeart />
             </button>
-            <Link className={cx('book-thumb')} to={`/product/${product.id}`}>
+            <Link className={cx('book-thumb')} to={productPath}>
                 {product.thumbnail ? (
                     <img src={getImageUrl(product.thumbnail)} alt={product.title} />
                 ) : (
@@ -86,7 +88,7 @@ function ProductCard({ product, compact = false }) {
             </Link>
             <div className={cx('book-info')}>
                 <p className={cx('book-author')}>{product.author || product.category?.name || 'BookStory'}</p>
-                <Link className={cx('book-title')} to={`/product/${product.id}`}>
+                <Link className={cx('book-title')} to={productPath}>
                     {product.title}
                 </Link>
                 <div className={cx('book-rating')}>
@@ -99,7 +101,7 @@ function ProductCard({ product, compact = false }) {
                         <span className={cx('price')}>{formatMoney(product.price)}</span>
                         <span className={cx('stock')}>{Number(product.stock || 0)} còn lại</span>
                     </div>
-                    <Link className={cx('add-cart-btn')} to={`/product/${product.id}`}>
+                    <Link className={cx('add-cart-btn')} to={productPath}>
                         Xem
                     </Link>
                 </div>
@@ -375,7 +377,7 @@ export default function Home() {
                     <div className={cx('empty')}>Chưa có sách mới trong hệ thống.</div>
                 ) : (
                     <div className={cx('new-arrivals-layout')}>
-                        <Link className={cx('new-feature-card')} to={`/product/${newestProducts[0].id}`}>
+                        <Link className={cx('new-feature-card')} to={`/product/${newestProducts[0].slug}`}>
                             <div className={cx('new-feature-image')}>
                                 {newestProducts[0].thumbnail ? (
                                     <img src={getImageUrl(newestProducts[0].thumbnail)} alt={newestProducts[0].title} />
@@ -397,7 +399,7 @@ export default function Home() {
 
                         <div className={cx('new-side-list')}>
                             {newestProducts.slice(1, 3).map((product) => (
-                                <Link className={cx('new-side-card')} key={product.id} to={`/product/${product.id}`}>
+                                <Link className={cx('new-side-card')} key={product.id} to={`/product/${product.slug}`}>
                                     <div className={cx('new-side-thumb')}>
                                         {product.thumbnail ? (
                                             <img src={getImageUrl(product.thumbnail)} alt={product.title} />

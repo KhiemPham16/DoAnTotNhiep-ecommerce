@@ -6,8 +6,8 @@ export const productService = {
         return res.data;
     },
 
-    getProductById: async (id) => {
-        const res = await api.get(`/products/${id}`);
+    getProductBySlug: async (slug) => {
+        const res = await api.get(`/products/${slug}`);
         return res.data;
     },
 

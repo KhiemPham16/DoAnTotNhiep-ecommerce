@@ -154,9 +154,8 @@ export default function App() {
 
             <Route element={<ProtectedRoute />}>
                 <Route element={<SiteLayout />}>
-                    <Route path="/cart" element={<ShoppingCart />} />
                     <Route path="/pay" element={<Pay />} />
-                    <Route path="/sepay/:orderId" element={<Sepay />} />
+                    <Route path="/sepay/" element={<Sepay />} />
                     <Route path="/payment-confirm" element={<Payments />} />
                 </Route>
             </Route>

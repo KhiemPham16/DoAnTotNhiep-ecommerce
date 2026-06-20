@@ -4,6 +4,7 @@ import classNames from 'classnames/bind';
 import styles from './Auth.module.scss';
 
 import { useAuthStore } from '~/stores/useAuthStore';
+import { getDefaultDashboardPath } from '~/utils/dashboardPermissions';
 
 const cx = classNames.bind(styles);
 
@@ -34,8 +35,10 @@ export default function Login() {
 
         const role = user?.role?.toUpperCase();
 
-        if (['ADMIN', 'MANAGER'].includes(role)) {
-            navigate('/dashboard');
+        const defaultDashboardPath = getDefaultDashboardPath(role);
+
+        if (defaultDashboardPath !== '/') {
+            navigate(defaultDashboardPath);
         } else {
             navigate('/');
         }

@@ -170,7 +170,7 @@ export default function Category() {
                         <div className={cx('products-grid')}>
                             {paginatedProducts.map((product) => (
                                 <article key={product.id} className={cx('product-card')}>
-                                    <Link to={`/product/${product.id}`} className={cx('product-link')}>
+                                    <Link to={`/product/${product.slug}`} className={cx('product-link')}>
                                         <div className={cx('thumb')}>
                                             {product.thumbnail ? (
                                                 <img src={getImageUrl(product.thumbnail)} alt={product.title} />
