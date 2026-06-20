@@ -1,39 +1,20 @@
 import { create } from 'zustand';
 import { toast } from 'sonner';
 
+import { categoryService } from '~/services/categoryService';
 import { productService } from '~/services/productService';
-
-const activeProductParams = {
-    isActive: 'true',
-    limit: 100
-};
 
 export const useProductStore = create((set, get) => ({
     products: [],
-    activeProducts: [],
-
+    categories: [],
     loading: false,
-    loadingActiveProducts: false,
     saving: false,
 
-    fetchProducts: async (params, { force = false } = {}) => {
-        const { products, loading } = get();
-
-        if (!force && products.length > 0 && !params) {
-            return true;
-        }
-
-        if (loading) return true;
-
+    fetchProducts: async (params) => {
         try {
             set({ loading: true });
-
             const data = await productService.getProducts(params);
-
-            set({
-                products: data.data || []
-            });
-
+            set({ products: data.data || [] });
             return true;
         } catch (error) {
             console.error(error);
@@ -44,50 +25,24 @@ export const useProductStore = create((set, get) => ({
         }
     },
 
-    fetchActiveProducts: async ({ force = false } = {}) => {
-        const { activeProducts, loadingActiveProducts } = get();
-
-        if (!force && activeProducts.length > 0) {
-            return activeProducts;
-        }
-
-        if (loadingActiveProducts) {
-            return activeProducts;
-        }
-
+    fetchCategories: async () => {
         try {
-            set({ loadingActiveProducts: true });
-
-            const data = await productService.getProducts(activeProductParams);
-            const products = data.data || [];
-
-            set({
-                activeProducts: products
-            });
-
-            return products;
+            const data = await categoryService.getCategories();
+            set({ categories: data.data || [] });
+            return true;
         } catch (error) {
             console.error(error);
-            toast.error(error?.response?.data?.message || 'Không tải được danh sách sản phẩm');
-            return [];
-        } finally {
-            set({ loadingActiveProducts: false });
+            toast.error(error?.response?.data?.message || 'Không tải được danh mục');
+            return false;
         }
     },
 
     createProduct: async (payload, params) => {
         try {
             set({ saving: true });
-
             await productService.createProduct(payload);
-
             toast.success('Tạo sản phẩm thành công');
-
-            await Promise.all([
-                get().fetchProducts(params, { force: true }),
-                get().fetchActiveProducts({ force: true })
-            ]);
-
+            await get().fetchProducts(params);
             return true;
         } catch (error) {
             console.error(error);
@@ -101,16 +56,9 @@ export const useProductStore = create((set, get) => ({
     updateProduct: async (id, payload, params) => {
         try {
             set({ saving: true });
-
             await productService.updateProduct(id, payload);
-
             toast.success('Cập nhật sản phẩm thành công');
-
-            await Promise.all([
-                get().fetchProducts(params, { force: true }),
-                get().fetchActiveProducts({ force: true })
-            ]);
-
+            await get().fetchProducts(params);
             return true;
         } catch (error) {
             console.error(error);
@@ -124,23 +72,13 @@ export const useProductStore = create((set, get) => ({
     deleteProduct: async (id, params) => {
         try {
             await productService.deleteProduct(id);
-
             toast.success('Xóa sản phẩm thành công');
-
-            await Promise.all([
-                get().fetchProducts(params, { force: true }),
-                get().fetchActiveProducts({ force: true })
-            ]);
-
+            await get().fetchProducts(params);
             return true;
         } catch (error) {
             console.error(error);
             toast.error(error?.response?.data?.message || 'Không xóa được sản phẩm');
             return false;
         }
-    },
-
-    clearActiveProducts: () => {
-        set({ activeProducts: [] });
     }
 }));

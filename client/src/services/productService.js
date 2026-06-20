@@ -6,8 +6,8 @@ export const productService = {
         return res.data;
     },
 
-    getProductBySlug: async (slug) => {
-        const res = await api.get(`/products/${slug}`);
+    getProductById: async (id) => {
+        const res = await api.get(`/products/${id}`);
         return res.data;
     },
 
@@ -17,12 +17,12 @@ export const productService = {
     },
 
     updateProduct: async (id, payload) => {
-        const res = await api.patch(`/products/id/${id}`, payload);
+        const res = await api.patch(`/products/${id}`, payload);
         return res.data;
     },
 
     deleteProduct: async (id) => {
-        const res = await api.delete(`/products/id/${id}`);
+        const res = await api.delete(`/products/${id}`);
         return res.data;
     }
 };

@@ -3,7 +3,6 @@ import classNames from 'classnames/bind';
 
 import useDebounce from '~/hooks/useDebounce';
 import { useProductStore } from '~/stores/useProductStore';
-import { useCategoryStore } from '~/stores/useCategoryStore';
 
 import ProductForm from './ProductForm';
 import styles from './DashboardProducts.module.scss';
@@ -16,7 +15,6 @@ const initialFormData = {
     author: '',
     publisher: '',
     isbn: '',
-    tagline: '',
     description: '',
     thumbnail: '',
     price: '',
@@ -33,7 +31,9 @@ const formatPrice = (value) =>
     }).format(Number(value || 0));
 
 const getImageUrl = (thumbnail) => {
-    if (!thumbnail) return '';
+    if (!thumbnail) {
+        return '';
+    }
 
     if (/^https?:\/\//i.test(thumbnail)) {
         return thumbnail;
@@ -43,16 +43,22 @@ const getImageUrl = (thumbnail) => {
 };
 
 export default function Products() {
-    const { products, loading, saving, fetchProducts, createProduct, updateProduct, deleteProduct } = useProductStore();
-
-    const { categories, fetchCategories } = useCategoryStore();
-
+    const {
+        products,
+        categories,
+        loading,
+        saving,
+        fetchProducts,
+        fetchCategories,
+        createProduct,
+        updateProduct,
+        deleteProduct
+    } = useProductStore();
     const [keyword, setKeyword] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
     const [isOpenModal, setIsOpenModal] = useState(false);
     const [editingProduct, setEditingProduct] = useState(null);
     const [formData, setFormData] = useState(initialFormData);
-
     const debouncedKeyword = useDebounce(keyword, 500);
 
     const productParams = useMemo(
@@ -65,7 +71,7 @@ export default function Products() {
     );
 
     useEffect(() => {
-        fetchProducts(productParams, { force: true });
+        fetchProducts(productParams);
     }, [fetchProducts, productParams]);
 
     useEffect(() => {
@@ -74,7 +80,6 @@ export default function Products() {
 
     const handleInputChange = (event) => {
         const { name, value, type, checked } = event.target;
-
         setFormData((current) => ({
             ...current,
             [name]: type === 'checkbox' ? checked : value
@@ -95,7 +100,6 @@ export default function Products() {
             author: product.author || '',
             publisher: product.publisher || '',
             isbn: product.isbn || '',
-            tagline: product.tagline || '',
             description: product.description || '',
             thumbnail: product.thumbnail || '',
             price: product.price ? String(product.price) : '',
@@ -117,13 +121,6 @@ export default function Products() {
 
         const payload = {
             ...formData,
-            title: formData.title.trim(),
-            author: formData.author.trim(),
-            publisher: formData.publisher.trim(),
-            isbn: formData.isbn.trim(),
-            tagline: formData.tagline.trim(),
-            description: formData.description.trim(),
-            thumbnail: formData.thumbnail.trim(),
             price: Number(formData.price),
             stock: Number(formData.stock || 0)
         };
@@ -166,7 +163,6 @@ export default function Products() {
                     value={keyword}
                     onChange={(event) => setKeyword(event.target.value)}
                 />
-
                 <select
                     className={cx('select')}
                     value={statusFilter}
@@ -191,7 +187,6 @@ export default function Products() {
                                 <th>Hành động</th>
                             </tr>
                         </thead>
-
                         <tbody>
                             {loading ? (
                                 <tr>
@@ -217,30 +212,25 @@ export default function Products() {
                                                         <span>{product.title?.slice(0, 1) || '?'}</span>
                                                     )}
                                                 </div>
-
                                                 <div>
                                                     <strong>{product.title}</strong>
                                                     <span>{product.author}</span>
                                                 </div>
                                             </div>
                                         </td>
-
                                         <td>{product.category?.name || '-'}</td>
                                         <td>{formatPrice(product.price)}</td>
                                         <td>{product.stock}</td>
-
                                         <td>
                                             <span className={cx('badge', product.isActive ? 'active' : 'inactive')}>
                                                 {product.isActive ? 'Đang bán' : 'Tạm ẩn'}
                                             </span>
                                         </td>
-
                                         <td>
                                             <div className={cx('rowActions')}>
                                                 <button type="button" onClick={() => openEditModal(product)}>
                                                     Sửa
                                                 </button>
-
                                                 <button
                                                     className={cx('danger')}
                                                     type="button"
@@ -263,7 +253,6 @@ export default function Products() {
                     <div className={cx('modalContent')}>
                         <div className={cx('modalHeader')}>
                             <h2>{editingProduct ? 'Cập nhật sản phẩm' : 'Thêm sản phẩm mới'}</h2>
-
                             <button type="button" onClick={closeModal} aria-label="Đóng">
                                 ×
                             </button>

@@ -137,7 +137,7 @@ export default function Pay() {
 
         if (!savedAddress?.id) return;
 
-        const checkoutPayload = {
+        const order = await createOrder({
             addressId: savedAddress.id,
             paymentMethodId,
             couponCode: coupon?.code || undefined,
@@ -146,24 +146,7 @@ export default function Pay() {
                 productId: item.id,
                 quantity: item.quantity
             }))
-        };
-
-        // SePay: chưa tạo đơn ở Pay.jsx
-        // Qua trang SePay trước, user bấm "Thanh toán ngay" mới tạo đơn
-        if (isSepayMethod(selectedPaymentMethod)) {
-            navigate('/sepay', {
-                state: {
-                    checkoutPayload,
-                    paymentMethod: selectedPaymentMethod
-                }
-            });
-
-            return;
-        }
-
-        // COD / phương thức thường: tạo đơn ngay
-        const order = await createOrder(checkoutPayload);
-
+        });
         console.log('ORDER RESULT:', order);
 
         const orderId = order?.id || order?.orderId || order?.data?.id || order?.data?.orderId;
@@ -175,6 +158,11 @@ export default function Pay() {
 
         clearCart();
         clearCoupon();
+
+        if (isSepayMethod(selectedPaymentMethod)) {
+            navigate(`/sepay/${orderId}`);
+            return;
+        }
 
         navigate('/payment-confirm', {
             state: {

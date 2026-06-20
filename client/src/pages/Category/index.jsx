@@ -15,6 +15,7 @@ import styles from './Category.module.scss';
 const cx = classNames.bind(styles);
 
 const allCategoryId = 'all';
+const productsPerPage = 24;
 
 export default function Category() {
     const navigate = useNavigate();
@@ -25,6 +26,7 @@ export default function Category() {
     const [categories, setCategories] = useState([]);
     const [products, setProducts] = useState([]);
     const [selectedCategoryId, setSelectedCategoryId] = useState(categoryIdParam);
+    const [currentPage, setCurrentPage] = useState(1);
     const [loadingCategories, setLoadingCategories] = useState(false);
     const [loadingProducts, setLoadingProducts] = useState(false);
     const debouncedSearchKeyword = useDebounce(searchKeyword, 500);
@@ -56,7 +58,7 @@ export default function Category() {
             keyword: debouncedSearchKeyword || undefined,
             categoryId: selectedCategoryId === allCategoryId ? undefined : selectedCategoryId,
             isActive: 'true',
-            limit: 100
+            limit: 1000
         }),
         [debouncedSearchKeyword, selectedCategoryId]
     );
@@ -81,10 +83,19 @@ export default function Category() {
     const selectedCategory = categories.find((category) => category.id === selectedCategoryId);
     const heading = searchKeyword ? `Kết quả tìm kiếm: "${searchKeyword}"` : selectedCategory?.name || 'Tất cả sách';
 
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [debouncedSearchKeyword, selectedCategoryId]);
+
+    const totalPages = Math.ceil(products.length / productsPerPage);
+    const paginatedProducts = useMemo(() => {
+        const startIndex = (currentPage - 1) * productsPerPage;
+        return products.slice(startIndex, startIndex + productsPerPage);
+    }, [currentPage, products]);
+
     const buildCartProduct = (product) => ({
         id: product.id,
         title: product.title,
-        slug: product.slug,
         price: product.price,
         thumbnail: product.thumbnail,
         stock: product.stock,
@@ -155,10 +166,11 @@ export default function Category() {
                     ) : products.length === 0 ? (
                         <div className={cx('empty')}>Chưa có sản phẩm phù hợp.</div>
                     ) : (
+                        <>
                         <div className={cx('products-grid')}>
-                            {products.map((product) => (
+                            {paginatedProducts.map((product) => (
                                 <article key={product.id} className={cx('product-card')}>
-                                    <Link to={`/product/${product.slug}`} className={cx('product-link')}>
+                                    <Link to={`/product/${product.id}`} className={cx('product-link')}>
                                         <div className={cx('thumb')}>
                                             {product.thumbnail ? (
                                                 <img src={getImageUrl(product.thumbnail)} alt={product.title} />
@@ -210,6 +222,38 @@ export default function Category() {
                                 </article>
                             ))}
                         </div>
+
+                        {totalPages > 1 && (
+                            <div className={cx('pagination')}>
+                                <button
+                                    type="button"
+                                    disabled={currentPage === 1}
+                                    onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+                                >
+                                    Trước
+                                </button>
+
+                                {Array.from({ length: totalPages }, (_, index) => index + 1).map((page) => (
+                                    <button
+                                        key={page}
+                                        type="button"
+                                        className={cx({ active: currentPage === page })}
+                                        onClick={() => setCurrentPage(page)}
+                                    >
+                                        {page}
+                                    </button>
+                                ))}
+
+                                <button
+                                    type="button"
+                                    disabled={currentPage === totalPages}
+                                    onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
+                                >
+                                    Sau
+                                </button>
+                            </div>
+                        )}
+                        </>
                     )}
                 </main>
             </div>

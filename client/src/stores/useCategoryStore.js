@@ -8,31 +8,16 @@ export const useCategoryStore = create((set, get) => ({
     loading: false,
     saving: false,
 
-    fetchCategories: async ({ force = false } = {}) => {
-        const state = get();
-
-        if (!force && state.categories.length > 0) {
-            return state.categories;
-        }
-
-        if (state.loading) {
-            return state.categories;
-        }
-
+    fetchCategories: async () => {
         try {
             set({ loading: true });
-
             const data = await categoryService.getCategories();
-
-            set({
-                categories: data.data || []
-            });
-
-            return data.data || [];
+            set({ categories: data.data || [] });
+            return true;
         } catch (error) {
             console.error(error);
             toast.error(error?.response?.data?.message || 'Không tải được danh sách danh mục');
-            return [];
+            return false;
         } finally {
             set({ loading: false });
         }
