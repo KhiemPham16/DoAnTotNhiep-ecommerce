@@ -131,6 +131,10 @@ async function main() {
         {
             name: 'Thiếu nhi',
             slug: 'thieu-nhi'
+        },
+        {
+            name: 'Phát triển bản thân',
+            slug: 'phat-trien-ban-than'
         }
     ];
 
@@ -194,7 +198,7 @@ async function main() {
             author: 'Dale Carnegie',
             price: 120000,
             stock: 100,
-            thumbnail: '/uploads/media/products/dac-nhan-tam.png',
+            thumbnail: '/uploads/media/products/dac-nhan-tam.webp',
             categoryId: categories[1].id,
             description: `
             Đắc Nhân Tâm là một trong những cuốn sách phát triển bản thân nổi tiếng nhất thế giới.
@@ -210,7 +214,7 @@ async function main() {
             author: 'Robert C. Martin',
             price: 250000,
             stock: 50,
-            thumbnail: '/uploads/media/products/clean-code.png',
+            thumbnail: '/uploads/media/products/clean-code.webp',
             categoryId: categories[2].id,
             description: `
             Clean Code giúp lập trình viên hiểu cách đặt tên biến, tổ chức hàm,
@@ -226,7 +230,7 @@ async function main() {
             author: 'F8 Team',
             price: 180000,
             stock: 80,
-            thumbnail: '/uploads/media/products/js-pro.png',
+            thumbnail: '/uploads/media/products/js-pro.webp',
             categoryId: categories[2].id,
             description: `
             Cuốn sách hướng dẫn JavaScript từ nền tảng đến nâng cao,
@@ -242,11 +246,27 @@ async function main() {
             author: 'J.K. Rowling',
             price: 200000,
             stock: 60,
-            thumbnail: '/uploads/media/products/harry-potter.png',
+            thumbnail: '/uploads/media/products/harry-potter.webp',
             categoryId: categories[0].id,
             description: `
             Tập đầu tiên trong loạt truyện Harry Potter nổi tiếng toàn cầu.
             Cuốn sách mở ra hành trình đầy phép thuật, tình bạn và những cuộc phiêu lưu hấp dẫn.
+        `,
+            isFeatured: true
+        },
+        {
+            title: 'Atomic Habits',
+            slug: 'atomic-habits',
+            tagline: 'Xây dựng thói quen nhỏ để tạo nên thay đổi lớn mỗi ngày.',
+            author: 'James Clear',
+            price: 160000,
+            stock: 70,
+            thumbnail: '/uploads/media/products/atomic-habits.webp',
+            categoryId: categories[4].id,
+            description: `
+            Atomic Habits trình bày cách hình thành thói quen tốt, loại bỏ thói quen xấu và cải thiện bản thân
+            thông qua những thay đổi nhỏ nhưng đều đặn. Cuốn sách phù hợp với người muốn học tập, làm việc
+            và phát triển bản thân một cách bền vững.
         `,
             isFeatured: true
         }
@@ -470,7 +490,7 @@ async function main() {
                 <p>Danh sách này phù hợp cho người muốn phát triển bản thân, học tập và nâng cấp tư duy.</p>
                 <p>Một số đầu sách nổi bật gồm Đắc Nhân Tâm, Atomic Habits, Clean Code và Nhà Giả Kim.</p>
             `,
-            coverImageUrl: '/uploads/media/posts/4321582bd3e68545c9bdb4c89d235aaa.jpg',
+            coverImageUrl: '/uploads/media/posts/4321582bd3e68545c9bdb4c89d235aaa.webp',
             readMinutes: 5,
             featured: true,
             publishedAt: new Date(),
@@ -486,7 +506,7 @@ async function main() {
                 <p>Clean Code vẫn đáng đọc, đặc biệt với sinh viên IT và lập trình viên mới đi làm.</p>
                 <p>AI có thể sinh code nhanh, nhưng tư duy đặt tên biến, tách hàm và tổ chức module vẫn là kỹ năng lõi.</p>
             `,
-            coverImageUrl: '/uploads/media/posts/93a7e97ba6f72741fd0849bd712c84a9.jpeg',
+            coverImageUrl: '/uploads/media/posts/93a7e97ba6f72741fd0849bd712c84a9.webp',
             readMinutes: 4,
             featured: true,
             publishedAt: new Date(),
@@ -502,7 +522,7 @@ async function main() {
                 <p>Mỗi ngày code một ít, đọc tài liệu một ít và sửa lỗi một ít sẽ tạo ra tiến bộ lớn sau vài tháng.</p>
                 <p>Thói quen nhỏ nhưng đều đặn thường hiệu quả hơn việc học dồn trong vài ngày.</p>
             `,
-            coverImageUrl: '/uploads/media/posts/de97344349f58b604309080a05ef913e.jpg',
+            coverImageUrl: '/uploads/media/posts/de97344349f58b604309080a05ef913e.webp',
             readMinutes: 6,
             featured: false,
             publishedAt: new Date(),

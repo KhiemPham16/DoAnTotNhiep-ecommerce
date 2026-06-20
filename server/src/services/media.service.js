@@ -1,11 +1,42 @@
 const fs = require('fs');
 const path = require('path');
+const sharp = require('sharp');
 
 const prisma = require('~/libs/prisma');
 const { AppError } = require('~/errors/AppError');
 const { validateUploadMediaPayload } = require('~/validators/media.validator');
 
 class MediaService {
+    async normalizeUploadedImage(file) {
+        if (!file.mimetype.startsWith('image/')) {
+            return file;
+        }
+
+        const parsedPath = path.parse(file.path);
+        const webpFileName = `${path.parse(file.filename).name}.webp`;
+        const webpPath = path.join(parsedPath.dir, webpFileName);
+        const outputPath = file.path === webpPath ? `${webpPath}.tmp` : webpPath;
+
+        await sharp(file.path).rotate().webp({ quality: 82 }).toFile(outputPath);
+
+        const { size } = fs.statSync(outputPath);
+
+        if (file.path === webpPath) {
+            fs.unlinkSync(file.path);
+            fs.renameSync(outputPath, webpPath);
+        } else {
+            fs.unlinkSync(file.path);
+        }
+
+        return {
+            ...file,
+            filename: webpFileName,
+            path: webpPath,
+            mimetype: 'image/webp',
+            size
+        };
+    }
+
     toPublicUser(user) {
         if (!user) return null;
 
@@ -38,15 +69,16 @@ class MediaService {
     async uploadMedia(userId, file, data = {}) {
         validateUploadMediaPayload(file);
 
+        const uploadedFile = await this.normalizeUploadedImage(file);
         const { alt, folder } = data;
 
         let type = 'DOCUMENT';
 
-        if (file.mimetype.startsWith('image/')) {
+        if (uploadedFile.mimetype.startsWith('image/')) {
             type = 'IMAGE';
         }
 
-        if (file.mimetype.startsWith('video/')) {
+        if (uploadedFile.mimetype.startsWith('video/')) {
             type = 'VIDEO';
         }
 
@@ -54,11 +86,11 @@ class MediaService {
 
         const media = await prisma.media.create({
             data: {
-                fileName: file.filename,
-                originalName: file.originalname,
-                mimeType: file.mimetype,
-                size: file.size,
-                url: `/uploads/media/${safeFolder}/${file.filename}`,
+                fileName: uploadedFile.filename,
+                originalName: uploadedFile.originalname,
+                mimeType: uploadedFile.mimetype,
+                size: uploadedFile.size,
+                url: `/uploads/media/${safeFolder}/${uploadedFile.filename}`,
                 type,
                 alt,
                 folder: safeFolder,
