@@ -4,6 +4,16 @@ import { toast } from 'sonner';
 import { orderStatusLabels } from '~/utils/dashboardUtils';
 import { orderService } from '~/services/orderService';
 
+const updateOrderInState = (orders, orderId, updatedOrder) =>
+    orders.map((item) =>
+        item.id === orderId
+            ? {
+                  ...item,
+                  ...updatedOrder
+              }
+            : item
+    );
+
 export const useOrderStore = create((set, get) => ({
     orders: [],
     selectedOrder: null,
@@ -163,20 +173,10 @@ export const useOrderStore = create((set, get) => ({
             set({ updatingId: order.id });
 
             const data = await orderService.updatePaymentStatus(order.id, paymentStatus);
-
             const updatedOrder = data.data;
 
             set((state) => ({
-                orders: state.orders.map((item) =>
-                    item.id === order.id
-                        ? {
-                              ...item,
-                              ...updatedOrder,
-                              user: item.user,
-                              address: item.address
-                          }
-                        : item
-                )
+                orders: updateOrderInState(state.orders, order.id, updatedOrder)
             }));
 
             toast.success('Cập nhật thanh toán thành công');
@@ -184,9 +184,7 @@ export const useOrderStore = create((set, get) => ({
             return true;
         } catch (error) {
             console.error(error);
-
             toast.error(error?.response?.data?.message || 'Không cập nhật được trạng thái thanh toán');
-
             return false;
         } finally {
             set({ updatingId: null });
@@ -205,16 +203,7 @@ export const useOrderStore = create((set, get) => ({
             const updatedOrder = data.data;
 
             set((state) => ({
-                orders: state.orders.map((item) =>
-                    item.id === order.id
-                        ? {
-                              ...item,
-                              ...updatedOrder,
-                              user: item.user,
-                              address: item.address
-                          }
-                        : item
-                )
+                orders: updateOrderInState(state.orders, order.id, updatedOrder)
             }));
 
             toast.success(`Đã chuyển đơn hàng sang "${orderStatusLabels[status]}"`);
@@ -223,6 +212,96 @@ export const useOrderStore = create((set, get) => ({
         } catch (error) {
             console.error(error);
             toast.error(error?.response?.data?.message || 'Không cập nhật được trạng thái đơn hàng');
+            return false;
+        } finally {
+            set({ updatingId: null });
+        }
+    },
+
+    approveOrder: async (order) => {
+        try {
+            set({ updatingId: order.id });
+
+            const data = await orderService.approveOrder(order.id);
+            const updatedOrder = data.data;
+
+            set((state) => ({
+                orders: updateOrderInState(state.orders, order.id, updatedOrder),
+                selectedOrder:
+                    state.selectedOrder?.id === order.id
+                        ? {
+                              ...state.selectedOrder,
+                              ...updatedOrder
+                          }
+                        : state.selectedOrder
+            }));
+
+            toast.success('Duyệt đơn hàng thành công');
+
+            return true;
+        } catch (error) {
+            console.error(error);
+            toast.error(error?.response?.data?.message || 'Không duyệt được đơn hàng');
+            return false;
+        } finally {
+            set({ updatingId: null });
+        }
+    },
+
+    assignOrder: async (order, employeeId) => {
+        try {
+            set({ updatingId: order.id });
+
+            const data = await orderService.assignOrder(order.id, employeeId);
+            const updatedOrder = data.data;
+
+            set((state) => ({
+                orders: updateOrderInState(state.orders, order.id, updatedOrder),
+                selectedOrder:
+                    state.selectedOrder?.id === order.id
+                        ? {
+                              ...state.selectedOrder,
+                              ...updatedOrder
+                          }
+                        : state.selectedOrder
+            }));
+
+            toast.success('Phân công nhân viên thành công');
+
+            return true;
+        } catch (error) {
+            console.error(error);
+            toast.error(error?.response?.data?.message || 'Không phân công được đơn hàng');
+            return false;
+        } finally {
+            set({ updatingId: null });
+        }
+    },
+
+    unassignOrder: async (order) => {
+        try {
+            set({ updatingId: order.id });
+
+            const data = await orderService.unassignOrder(order.id);
+            const updatedOrder = data.data;
+
+            set((state) => ({
+                orders: updateOrderInState(state.orders, order.id, updatedOrder),
+                selectedOrder:
+                    state.selectedOrder?.id === order.id
+                        ? {
+                              ...state.selectedOrder,
+                              ...updatedOrder
+                          }
+                        : state.selectedOrder
+            }));
+
+            toast.success('Hủy phân công thành công');
+
+            return true;
+        } catch (error) {
+            console.error(error);
+            toast.error(error?.response?.data?.message || 'Không hủy phân công được đơn hàng');
             return false;
         } finally {
             set({ updatingId: null });
