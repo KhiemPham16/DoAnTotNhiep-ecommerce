@@ -49,7 +49,7 @@ export default function ProtectedRoute({ allowedRoles = [] }) {
         }
     }
 
-    if (['ADMIN', 'MANAGER'].includes(role) && !location.pathname.startsWith('/dashboard')) {
+    if (['ADMIN', 'MANAGER', 'EMPLOYEE'].includes(role) && !location.pathname.startsWith('/dashboard')) {
         return <Navigate to="/dashboard" replace />;
     }
 

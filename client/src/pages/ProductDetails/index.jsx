@@ -39,7 +39,7 @@ function RatingStars({ value = 0, interactive = false, onChange }) {
 
 export default function ProductDetails() {
     const navigate = useNavigate();
-    const { slug: productId } = useParams();
+    const { slug } = useParams();
     const { accessToken, user } = useAuthStore();
     const { addToCart } = useCartStore();
 
@@ -75,7 +75,11 @@ export default function ProductDetails() {
         try {
             setLoading(true);
             setQuantity(1);
-            const response = await productService.getProductById(productId);
+            setProduct(null);
+            setReviews([]);
+            setReviewPagination(null);
+            setReviewPermission(null);
+            const response = await productService.getProductBySlug(slug);
             setProduct(response.data || null);
         } catch (error) {
             console.error(error);
@@ -84,12 +88,18 @@ export default function ProductDetails() {
         } finally {
             setLoading(false);
         }
-    }, [productId]);
+    }, [slug]);
 
     const fetchReviews = useCallback(async () => {
+        if (!product?.id) {
+            setReviews([]);
+            setReviewPagination(null);
+            return;
+        }
+
         try {
             setReviewsLoading(true);
-            const response = await reviewService.getProductReviews(productId, { page: 1, limit: 20 });
+            const response = await reviewService.getProductReviews(product.id, { page: 1, limit: 20 });
             setReviews(getReviews(response));
             setReviewPagination(getPagination(response));
         } catch (error) {
@@ -98,22 +108,25 @@ export default function ProductDetails() {
         } finally {
             setReviewsLoading(false);
         }
-    }, [productId]);
+    }, [product?.id]);
 
     useEffect(() => {
         fetchProduct();
+    }, [fetchProduct]);
+
+    useEffect(() => {
         fetchReviews();
-    }, [fetchProduct, fetchReviews]);
+    }, [fetchReviews]);
 
     useEffect(() => {
         const fetchReviewPermission = async () => {
-            if (!accessToken) {
+            if (!accessToken || !product?.id) {
                 setReviewPermission(null);
                 return;
             }
 
             try {
-                const response = await reviewService.canReviewProduct(productId);
+                const response = await reviewService.canReviewProduct(product.id);
                 setReviewPermission(response.data || null);
             } catch (error) {
                 console.error(error);
@@ -122,7 +135,7 @@ export default function ProductDetails() {
         };
 
         fetchReviewPermission();
-    }, [accessToken, productId]);
+    }, [accessToken, product?.id]);
 
     useEffect(() => {
         const fetchRelatedProducts = async () => {
@@ -208,7 +221,7 @@ export default function ProductDetails() {
         try {
             setSubmittingReview(true);
             await reviewService.createReview({
-                productId,
+                productId: product.id,
                 orderId: reviewPermission.orderId,
                 rating: Number(reviewForm.rating),
                 comment: reviewForm.comment.trim()
@@ -508,7 +521,7 @@ export default function ProductDetails() {
                         <div className={cx('related-grid')}>
                             {relatedProducts.slice(0, 4).map((item) => (
                                 <article key={item.id} className={cx('related-card')}>
-                                    <Link to={`/product/${item.id}`} className={cx('related-link')}>
+                                    <Link to={`/product/${item.slug}`} className={cx('related-link')}>
                                         <div className={cx('related-thumb')}>
                                             {item.thumbnail ? (
                                                 <img src={getImageUrl(item.thumbnail)} alt={item.title} />
