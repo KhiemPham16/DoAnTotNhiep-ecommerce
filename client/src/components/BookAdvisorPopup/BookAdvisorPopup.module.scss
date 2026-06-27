@@ -246,3 +246,26 @@
         bottom: 16px;
     }
 }
+.headerActions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    button:first-child {
+        padding: 5px 9px;
+        border: 1px solid rgba(255, 255, 255, 0.4);
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.12);
+        color: #fff;
+        font-size: 12px;
+        cursor: pointer;
+    }
+
+    button:last-child {
+        border: none;
+        background: transparent;
+        color: #fff;
+        font-size: 26px;
+        cursor: pointer;
+    }
+}
