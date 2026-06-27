@@ -299,6 +299,16 @@
     resize: vertical;
 }
 
+.editorShell {
+    overflow: hidden;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    border-radius: 8px;
+}
+
+.editorShell :global(.tox-tinymce) {
+    border: 0;
+}
+
 .formGrid {
     display: grid;
     grid-template-columns: 1fr 180px;
@@ -353,6 +363,93 @@
     line-height: 1.65;
 }
 
+.editorPage {
+    display: grid;
+    gap: 14px;
+}
+
+.editorHeader {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.editorHeader h1 {
+    margin: 6px 0 8px;
+    font-size: 24px;
+    line-height: 1.2;
+}
+
+.textBtn {
+    border: 0;
+    background: transparent;
+    color: #2a83e9;
+    padding: 0;
+    font: inherit;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.editorActions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.editorActions button {
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    border-radius: 8px;
+    background: #fff;
+    color: rgba(0, 0, 0, 0.72);
+    padding: 9px 11px;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.editorLayout {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 14px;
+}
+
+.editorLayout.previewMode {
+    grid-template-columns: minmax(0, 1fr) minmax(320px, 0.72fr);
+    align-items: start;
+}
+
+.editorForm,
+.previewPane {
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 8px;
+    background: #fff;
+}
+
+.editorForm .form {
+    padding: 16px;
+}
+
+.previewPane {
+    display: grid;
+    gap: 12px;
+    padding: 16px;
+}
+
+.previewPane h2 {
+    margin: 0;
+    font-size: 22px;
+    line-height: 1.25;
+}
+
+.previewDek {
+    margin: 0;
+    color: rgba(0, 0, 0, 0.72);
+    font-size: 16px;
+    font-weight: 800;
+    line-height: 1.55;
+}
+
 @media (max-width: 720px) {
     .header {
         align-items: stretch;
@@ -367,5 +464,17 @@
     .modalActions {
         align-items: stretch;
         flex-direction: column;
+    }
+
+    .editorHeader {
+        flex-direction: column;
+    }
+
+    .editorActions {
+        justify-content: flex-start;
+    }
+
+    .editorLayout.previewMode {
+        grid-template-columns: 1fr;
     }
 }

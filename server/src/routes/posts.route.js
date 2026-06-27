@@ -11,6 +11,10 @@ router.get('/', postController.index);
 
 router.get('/admin', authenticate, authorize('ADMIN', 'MANAGER', 'EMPLOYEE'), postController.getAdminPosts);
 
+router.get('/admin/:id', authenticate, authorize('ADMIN', 'MANAGER', 'EMPLOYEE'), postController.getAdminPost);
+
+router.post('/drafts', authenticate, authorize('ADMIN', 'MANAGER', 'EMPLOYEE'), postController.storeDraft);
+
 router.get('/:slug', postController.show);
 
 router.post('/', authenticate, authorize('ADMIN', 'MANAGER', 'EMPLOYEE'), postController.store);

@@ -7,9 +7,18 @@ const uploadRoot = path.join(__dirname, '../../uploads/media');
 
 fs.mkdirSync(uploadRoot, { recursive: true });
 
+function getSafeFolder(folder) {
+    return String(folder || 'common')
+        .trim()
+        .replace(/\\/g, '/')
+        .split('/')
+        .filter((part) => part && part !== '.' && part !== '..')
+        .join('/') || 'common';
+}
+
 const storage = multer.diskStorage({
     destination(req, file, cb) {
-        const folder = req.body.folder || 'common';
+        const folder = getSafeFolder(req.body.folder);
 
         const targetDir = path.join(uploadRoot, folder);
 
@@ -36,5 +45,6 @@ const uploadMedia = multer({
 
 module.exports = {
     uploadMedia,
-    uploadRoot
+    uploadRoot,
+    getSafeFolder
 };

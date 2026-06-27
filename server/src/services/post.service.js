@@ -3,6 +3,11 @@ const prisma = require('~/libs/prisma');
 const { AppError } = require('~/errors/AppError');
 const { generateUniqueSlugPrisma } = require('~/utils/slugify');
 
+const publicRequiredFields = [
+    ['title', 'Tiêu đề'],
+    ['bodyHtml', 'Nội dung']
+];
+
 class PostService {
     getInclude() {
         return {
@@ -41,13 +46,14 @@ class PostService {
         return {
             id: post.publicId,
             slug: post.slug,
-            title: post.title,
-            dek: post.dek,
-            excerpt: post.excerpt,
-            bodyHtml: post.bodyHtml,
-            coverImageUrl: post.coverImageUrl,
-            readMinutes: post.readMinutes,
+            title: post.title || '',
+            dek: post.dek || '',
+            excerpt: post.excerpt || '',
+            bodyHtml: post.bodyHtml || '',
+            coverImageUrl: post.coverImageUrl || '',
+            readMinutes: post.readMinutes || 1,
             featured: post.featured,
+            viewCount: post.viewCount || 0,
             publishedAt: post.publishedAt,
             status: post.status,
             author: this.toPublicUser(post.author),
@@ -77,8 +83,14 @@ class PostService {
         });
 
         if (Object.prototype.hasOwnProperty.call(postData, 'title')) {
-            postData.title = postData.title?.trim();
+            postData.title = postData.title?.trim() || '';
         }
+
+        ['dek', 'excerpt', 'bodyHtml', 'coverImageUrl'].forEach((field) => {
+            if (Object.prototype.hasOwnProperty.call(postData, field)) {
+                postData[field] = postData[field]?.trim() || null;
+            }
+        });
 
         if (Object.prototype.hasOwnProperty.call(postData, 'readMinutes')) {
             postData.readMinutes = Number(postData.readMinutes || 1);
@@ -105,6 +117,18 @@ class PostService {
         }
 
         return postData;
+    }
+
+    validatePublishable(postData, currentPost = {}) {
+        const mergedPost = {
+            ...currentPost,
+            ...postData
+        };
+        const missingField = publicRequiredFields.find(([field]) => !String(mergedPost[field] || '').trim());
+
+        if (missingField) {
+            throw new AppError(400, `${missingField[1]} là bắt buộc khi public bài viết`);
+        }
     }
 
     async getPosts() {
@@ -149,6 +173,33 @@ class PostService {
             throw new AppError(404, 'Bài viết không tồn tại');
         }
 
+        const viewedPost = await prisma.post.update({
+            where: {
+                id: post.id
+            },
+            data: {
+                viewCount: {
+                    increment: 1
+                }
+            },
+            include: this.getInclude()
+        });
+
+        return this.toPublicPost(viewedPost);
+    }
+
+    async getAdminPostById(postId) {
+        const post = await prisma.post.findUnique({
+            where: {
+                publicId: postId
+            },
+            include: this.getInclude()
+        });
+
+        if (!post) {
+            throw new AppError(404, 'Bài viết không tồn tại');
+        }
+
         return this.toPublicPost(post);
     }
 
@@ -170,16 +221,32 @@ class PostService {
     async createPost(authorId, data) {
         const postData = this.buildPostData(data);
 
-        if (!postData.title) {
-            throw new AppError(400, 'Tiêu đề là bắt buộc');
+        if (postData.status === 'PUBLISHED') {
+            this.validatePublishable(postData);
         }
 
-        const slug = await generateUniqueSlugPrisma(postData.title, 'post');
+        const slug = await generateUniqueSlugPrisma(postData.title || `draft-${Date.now()}`, 'post');
 
         const post = await prisma.post.create({
             data: {
                 ...postData,
                 slug,
+                authorId
+            },
+            include: this.getInclude()
+        });
+
+        return this.toPublicPost(post);
+    }
+
+    async createDraft(authorId) {
+        const slug = await generateUniqueSlugPrisma(`draft-${Date.now()}`, 'post');
+
+        const post = await prisma.post.create({
+            data: {
+                slug,
+                title: '',
+                status: 'DRAFT',
                 authorId
             },
             include: this.getInclude()
@@ -201,14 +268,12 @@ class PostService {
 
         const postData = this.buildPostData(data, post);
 
-        if (Object.prototype.hasOwnProperty.call(postData, 'title')) {
-            if (!postData.title) {
-                throw new AppError(400, 'Tiêu đề là bắt buộc');
-            }
+        if (postData.status === 'PUBLISHED') {
+            this.validatePublishable(postData, post);
+        }
 
-            if (postData.title !== post.title) {
-                postData.slug = await generateUniqueSlugPrisma(postData.title, 'post');
-            }
+        if (Object.prototype.hasOwnProperty.call(postData, 'title') && postData.title && postData.title !== post.title) {
+            postData.slug = await generateUniqueSlugPrisma(postData.title, 'post');
         }
 
         const updatedPost = await prisma.post.update({

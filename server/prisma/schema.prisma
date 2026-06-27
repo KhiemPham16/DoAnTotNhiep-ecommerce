@@ -337,19 +337,20 @@ model Post {
   id       Int    @id @default(autoincrement())
   publicId String @unique @default(uuid())
 
-  slug  String @unique
-  title String
+  slug  String  @unique
+  title String  @default("")
 
-  dek     String @db.Text
-  excerpt String @db.Text
+  dek     String? @db.Text
+  excerpt String? @db.Text
 
-  bodyHtml String @db.MediumText
+  bodyHtml String? @db.MediumText
 
-  coverImageUrl String @db.VarChar(2048)
+  coverImageUrl String? @db.VarChar(2048)
 
-  readMinutes Int
+  readMinutes Int @default(1)
 
   featured Boolean @default(false)
+  viewCount Int @default(0)
 
   publishedAt DateTime?
 

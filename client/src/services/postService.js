@@ -11,8 +11,18 @@ export const postService = {
         return res.data;
     },
 
+    getAdminPostById: async (id) => {
+        const res = await api.get(`/posts/admin/${id}`);
+        return res.data;
+    },
+
     getPostBySlug: async (slug) => {
         const res = await api.get(`/posts/${slug}`);
+        return res.data;
+    },
+
+    createDraft: async () => {
+        const res = await api.post('/posts/drafts');
         return res.data;
     },
 
