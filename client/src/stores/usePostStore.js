@@ -35,6 +35,24 @@ export const usePostStore = create((set, get) => ({
         }
     },
 
+    fetchAdminPost: async (postId) => {
+        try {
+            set({ loading: true });
+
+            const data = await postService.getAdminPostById(postId);
+            const post = getPostData(data);
+
+            set({ selectedPost: post });
+            return post;
+        } catch (error) {
+            console.error(error);
+            toast.error(error?.response?.data?.message || 'Không tải được bài viết');
+            return null;
+        } finally {
+            set({ loading: false });
+        }
+    },
+
     fetchPostDetail: async (post) => {
         try {
             set({ selectedPost: post });
@@ -56,19 +74,39 @@ export const usePostStore = create((set, get) => ({
         }
     },
 
+    createDraft: async () => {
+        try {
+            set({ saving: true });
+
+            const data = await postService.createDraft();
+            const post = getPostData(data);
+            toast.success('Đã tạo draft bài viết');
+
+            await get().fetchPosts();
+            return post;
+        } catch (error) {
+            console.error(error);
+            toast.error(error?.response?.data?.message || 'Không tạo được draft bài viết');
+            return null;
+        } finally {
+            set({ saving: false });
+        }
+    },
+
     createPost: async (payload) => {
         try {
             set({ saving: true });
 
-            await postService.createPost(payload);
+            const data = await postService.createPost(payload);
+            const post = getPostData(data);
             toast.success('Tạo bài viết thành công');
 
             await get().fetchPosts();
-            return true;
+            return post;
         } catch (error) {
             console.error(error);
             toast.error(error?.response?.data?.message || 'Không tạo được bài viết');
-            return false;
+            return null;
         } finally {
             set({ saving: false });
         }
@@ -78,15 +116,25 @@ export const usePostStore = create((set, get) => ({
         try {
             set({ saving: true });
 
-            await postService.updatePost(postId, payload);
+            const data = await postService.updatePost(postId, payload);
+            const updatedPost = getPostData(data);
             toast.success('Cập nhật bài viết thành công');
 
             await get().fetchPosts();
-            return true;
+            set((state) => ({
+                selectedPost:
+                    getPostId(state.selectedPost) === postId
+                        ? {
+                              ...state.selectedPost,
+                              ...updatedPost
+                          }
+                        : state.selectedPost
+            }));
+            return updatedPost;
         } catch (error) {
             console.error(error);
             toast.error(error?.response?.data?.message || 'Không cập nhật được bài viết');
-            return false;
+            return null;
         } finally {
             set({ saving: false });
         }

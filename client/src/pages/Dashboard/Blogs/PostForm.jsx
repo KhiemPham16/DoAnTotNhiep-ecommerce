@@ -1,17 +1,29 @@
 import classNames from 'classnames/bind';
+import { Editor } from '@tinymce/tinymce-react';
 
 import MediaPicker from '~/components/MediaPicker';
 
 import styles from './DashboardBlogs.module.scss';
 
 const cx = classNames.bind(styles);
+const tinyMceApiKey = import.meta.env.VITE_TINYMCE_API_KEY;
 
 export default function PostForm({ formData, saving, onChange, onClose, onSubmit }) {
+    const handleEditorChange = (value) => {
+        onChange({
+            target: {
+                name: 'bodyHtml',
+                value,
+                type: 'text'
+            }
+        });
+    };
+
     return (
         <form className={cx('form')} onSubmit={onSubmit}>
             <label>
                 Tiêu đề
-                <input name="title" required value={formData.title} onChange={onChange} />
+                <input name="title" value={formData.title} onChange={onChange} />
             </label>
 
             <label>
@@ -39,7 +51,7 @@ export default function PostForm({ formData, saving, onChange, onClose, onSubmit
 
             <label>
                 Dòng giới thiệu
-                <input name="dek" required value={formData.dek} onChange={onChange} />
+                <input name="dek" value={formData.dek} onChange={onChange} />
             </label>
 
             <div className={cx('formGrid')}>
@@ -54,8 +66,45 @@ export default function PostForm({ formData, saving, onChange, onClose, onSubmit
             </div>
 
             <label>
-                Nội dung HTML
-                <textarea name="bodyHtml" rows="10" required value={formData.bodyHtml} onChange={onChange} />
+                Nội dung bài viết
+                <div className={cx('editorShell')}>
+                    <Editor
+                        apiKey={tinyMceApiKey}
+                        value={formData.bodyHtml}
+                        disabled={saving}
+                        onEditorChange={handleEditorChange}
+                        init={{
+                            height: 420,
+                            menubar: false,
+                            branding: false,
+                            promotion: false,
+                            resize: true,
+                            plugins: [
+                                'advlist',
+                                'autolink',
+                                'lists',
+                                'link',
+                                'image',
+                                'charmap',
+                                'preview',
+                                'anchor',
+                                'searchreplace',
+                                'visualblocks',
+                                'code',
+                                'fullscreen',
+                                'insertdatetime',
+                                'media',
+                                'table',
+                                'help',
+                                'wordcount'
+                            ],
+                            toolbar:
+                                'undo redo | blocks | bold italic underline blockquote | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | link image media table | removeformat code preview fullscreen',
+                            content_style:
+                                'body { font-family: Inter, Arial, sans-serif; font-size: 15px; line-height: 1.65; color: #111827; } img { max-width: 100%; height: auto; }'
+                        }}
+                    />
+                </div>
             </label>
 
             <div className={cx('modalActions')}>

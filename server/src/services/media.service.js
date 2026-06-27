@@ -7,8 +7,21 @@ const { AppError } = require('~/errors/AppError');
 const { validateUploadMediaPayload } = require('~/validators/media.validator');
 
 class MediaService {
+    getSafeFolder(folder) {
+        return String(folder || 'common')
+            .trim()
+            .replace(/\\/g, '/')
+            .split('/')
+            .filter((part) => part && part !== '.' && part !== '..')
+            .join('/') || 'common';
+    }
+
     async normalizeUploadedImage(file) {
         if (!file.mimetype.startsWith('image/')) {
+            return file;
+        }
+
+        if (file.mimetype === 'image/webp' || path.extname(file.originalname).toLowerCase() === '.webp') {
             return file;
         }
 
@@ -17,24 +30,33 @@ class MediaService {
         const webpPath = path.join(parsedPath.dir, webpFileName);
         const outputPath = file.path === webpPath ? `${webpPath}.tmp` : webpPath;
 
-        await sharp(file.path).rotate().webp({ quality: 82 }).toFile(outputPath);
+        try {
+            await sharp(file.path, { failOn: 'none' }).rotate().webp({ quality: 82 }).toFile(outputPath);
 
-        const { size } = fs.statSync(outputPath);
+            const { size } = fs.statSync(outputPath);
 
-        if (file.path === webpPath) {
-            fs.unlinkSync(file.path);
-            fs.renameSync(outputPath, webpPath);
-        } else {
-            fs.unlinkSync(file.path);
+            if (file.path === webpPath) {
+                fs.unlinkSync(file.path);
+                fs.renameSync(outputPath, webpPath);
+            } else {
+                fs.unlinkSync(file.path);
+            }
+
+            return {
+                ...file,
+                filename: webpFileName,
+                path: webpPath,
+                mimetype: 'image/webp',
+                size
+            };
+        } catch (error) {
+            if (fs.existsSync(outputPath) && outputPath !== file.path) {
+                fs.unlinkSync(outputPath);
+            }
+
+            console.warn('Skip image normalization:', error.message);
+            return file;
         }
-
-        return {
-            ...file,
-            filename: webpFileName,
-            path: webpPath,
-            mimetype: 'image/webp',
-            size
-        };
     }
 
     toPublicUser(user) {
@@ -82,7 +104,7 @@ class MediaService {
             type = 'VIDEO';
         }
 
-        const safeFolder = folder?.trim() || 'common';
+        const safeFolder = this.getSafeFolder(folder);
 
         const media = await prisma.media.create({
             data: {

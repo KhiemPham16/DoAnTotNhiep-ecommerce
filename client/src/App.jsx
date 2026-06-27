@@ -29,6 +29,7 @@ import Products from '~/pages/Dashboard/Products';
 import Categories from '~/pages/Dashboard/Categories';
 import Orders from '~/pages/Dashboard/Orders';
 import Blogs from '~/pages/Dashboard/Blogs';
+import BlogEditor from '~/pages/Dashboard/Blogs/BlogEditor';
 import Media from '~/pages/Dashboard/Media';
 import Coupons from '~/pages/Dashboard/Coupons';
 import PaymentMethods from '~/pages/Dashboard/PaymentMethods';
@@ -122,6 +123,14 @@ export default function App() {
                         element={
                             <DashboardRouteGuard route={routeByPath['/dashboard/blogs']}>
                                 <Blogs />
+                            </DashboardRouteGuard>
+                        }
+                    />
+                    <Route
+                        path="blogs/:postStatus/edit/:postId"
+                        element={
+                            <DashboardRouteGuard route={routeByPath['/dashboard/blogs']}>
+                                <BlogEditor />
                             </DashboardRouteGuard>
                         }
                     />

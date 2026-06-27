@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import classNames from 'classnames/bind';
 import { toast } from 'sonner';
+import { FaCalendarAlt, FaClock, FaEye, FaUser } from 'react-icons/fa';
 
 import { formatDate, getImageUrl, getPostContent, getPostCover, getPostData } from '~/utils/dashboardUtils';
 import { postService } from '~/services/postService';
@@ -9,6 +10,7 @@ import { postService } from '~/services/postService';
 import styles from './BlogDetail.module.scss';
 
 const cx = classNames.bind(styles);
+const formatViews = (value) => new Intl.NumberFormat('vi-VN').format(Number(value || 0));
 
 export default function BlogDetail() {
     const { slug } = useParams();
@@ -67,16 +69,35 @@ export default function BlogDetail() {
                     <Link to="/">Trang chủ</Link>
                     <span>/</span>
                     <Link to="/blog">Blog</Link>
+                    <span>/</span>
+                    <span>{post.title}</span>
                 </div>
 
                 <header className={cx('header')}>
-                    <div className={cx('meta')}>
-                        <span>{formatDate(post.publishedAt || post.createdAt)}</span>
-                        {post.author?.fullName && <span>{post.author.fullName}</span>}
-                        {post.readMinutes && <span>{post.readMinutes} phút đọc</span>}
-                    </div>
                     <h1>{post.title}</h1>
-                    {(post.excerpt || post.dek) && <p>{post.excerpt || post.dek}</p>}
+                    <div className={cx('meta')}>
+                        {post.author?.fullName && (
+                            <span>
+                                <FaUser />
+                                {post.author.fullName}
+                            </span>
+                        )}
+                        <span>
+                            <FaCalendarAlt />
+                            {formatDate(post.publishedAt || post.createdAt)}
+                        </span>
+                        <span>
+                            <FaEye />
+                            {formatViews(post.viewCount)} lượt xem
+                        </span>
+                        {post.readMinutes && (
+                            <span>
+                                <FaClock />
+                                {post.readMinutes} phút đọc
+                            </span>
+                        )}
+                    </div>
+                    {(post.excerpt || post.dek) && <p className={cx('lead')}>{post.excerpt || post.dek}</p>}
                     {categories.length > 0 && (
                         <div className={cx('categories')}>
                             {categories.map((category) => (
@@ -92,10 +113,12 @@ export default function BlogDetail() {
                     </div>
                 )}
 
-                <div
-                    className={cx('content')}
-                    dangerouslySetInnerHTML={{ __html: content || '<p>Bài viết chưa có nội dung.</p>' }}
-                />
+                <div className={cx('contentWrap')}>
+                    <div
+                        className={cx('content')}
+                        dangerouslySetInnerHTML={{ __html: content || '<p>Bài viết chưa có nội dung.</p>' }}
+                    />
+                </div>
 
                 <div className={cx('footer')}>
                     <Link to="/blog">← Quay lại danh sách bài viết</Link>

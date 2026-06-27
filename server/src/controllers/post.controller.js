@@ -27,12 +27,39 @@ class PostController {
         }
     }
 
+    async getAdminPost(req, res, next) {
+        try {
+            const post = await postService.getAdminPostById(req.params.id);
+
+            return res.status(200).json({
+                success: true,
+                data: post
+            });
+        } catch (error) {
+            next(error);
+        }
+    }
+
     async show(req, res, next) {
         try {
             const post = await postService.getPostBySlug(req.params.slug);
 
             return res.status(200).json({
                 success: true,
+                data: post
+            });
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    async storeDraft(req, res, next) {
+        try {
+            const post = await postService.createDraft(req.user.id);
+
+            return res.status(201).json({
+                success: true,
+                message: 'Tạo draft bài viết thành công',
                 data: post
             });
         } catch (error) {

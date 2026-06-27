@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import classNames from 'classnames/bind';
 
 import {
@@ -13,25 +14,14 @@ import {
 import useDebounce from '~/hooks/useDebounce';
 import { usePostStore } from '~/stores/usePostStore';
 
-import PostForm from './PostForm';
 import styles from './DashboardBlogs.module.scss';
 
 const cx = classNames.bind(styles);
 
 const postStatuses = ['DRAFT', 'PUBLISHED'];
 
-const initialFormData = {
-    title: '',
-    dek: '',
-    excerpt: '',
-    bodyHtml: '',
-    coverImageUrl: '',
-    readMinutes: '3',
-    featured: false,
-    status: 'DRAFT'
-};
-
 export default function Blogs() {
+    const navigate = useNavigate();
     const {
         posts,
         selectedPost,
@@ -40,17 +30,13 @@ export default function Blogs() {
         updatingId,
         fetchPosts,
         fetchPostDetail,
-        createPost,
-        updatePost,
+        createDraft,
         deletePost,
         changePostStatus,
         clearSelectedPost
     } = usePostStore();
     const [keyword, setKeyword] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
-    const [isOpenModal, setIsOpenModal] = useState(false);
-    const [editingPost, setEditingPost] = useState(null);
-    const [formData, setFormData] = useState(initialFormData);
     const debouncedKeyword = useDebounce(keyword, 500);
 
     useEffect(() => {
@@ -73,64 +59,25 @@ export default function Blogs() {
         });
     }, [posts, debouncedKeyword, statusFilter]);
 
-    const handleInputChange = (event) => {
-        const { name, value, type, checked } = event.target;
-        setFormData((current) => ({
-            ...current,
-            [name]: type === 'checkbox' ? checked : value
-        }));
+    const getEditorPath = (post, preview = false) => {
+        const status = normalizePostStatus(post.status) === 'PUBLISHED' ? 'public' : 'draft';
+        return `/dashboard/blogs/${status}/edit/${getPostId(post)}${preview ? '?preview' : ''}`;
     };
 
-    const openCreateModal = () => {
-        setEditingPost(null);
-        setFormData(initialFormData);
-        setIsOpenModal(true);
-    };
+    const handleCreateDraft = async () => {
+        const post = await createDraft();
 
-    const openEditModal = (post) => {
-        setEditingPost(post);
-        setFormData({
-            title: post.title || '',
-            dek: post.dek || '',
-            excerpt: post.excerpt || post.summary || '',
-            bodyHtml: post.bodyHtml || post.content || post.body || '',
-            coverImageUrl: post.coverImageUrl || post.thumbnail || post.coverImage || post.image || '',
-            readMinutes: post.readMinutes ? String(post.readMinutes) : '3',
-            featured: Boolean(post.featured),
-            status: normalizePostStatus(post.status)
-        });
-        setIsOpenModal(true);
-    };
-
-    const closeModal = () => {
-        setIsOpenModal(false);
-        setEditingPost(null);
-        setFormData(initialFormData);
-    };
-
-    const handleSubmit = async (event) => {
-        event.preventDefault();
-
-        const payload = {
-            title: formData.title.trim(),
-            dek: formData.dek.trim(),
-            excerpt: formData.excerpt.trim(),
-            bodyHtml: formData.bodyHtml.trim(),
-            coverImageUrl: formData.coverImageUrl.trim() || undefined,
-            readMinutes: Number(formData.readMinutes || 3),
-            featured: formData.featured,
-            status: formData.status
-        };
-
-        const success = editingPost ? await updatePost(getPostId(editingPost), payload) : await createPost(payload);
-
-        if (success) {
-            closeModal();
+        if (post) {
+            navigate(getEditorPath(post));
         }
     };
 
+    const openEditPage = (post, preview = false) => {
+        navigate(getEditorPath(post, preview));
+    };
+
     const handleDelete = async (post) => {
-        if (!window.confirm(`Xóa bài viết "${post.title}"?`)) {
+        if (!window.confirm(`Xóa bài viết "${post.title || post.slug}"?`)) {
             return;
         }
 
@@ -159,12 +106,12 @@ export default function Blogs() {
                 <div>
                     <div className={cx('title')}>Quản lý bài viết</div>
                     <div className={cx('subtitle')}>
-                        Tạo, cập nhật, xem chi tiết, xóa và chuyển trạng thái draft/public cho bài viết.
+                        Tạo draft, sửa trên trang riêng, xem preview và chuyển trạng thái draft/public.
                     </div>
                 </div>
 
-                <button className={cx('primaryBtn')} type="button" onClick={openCreateModal}>
-                    Tạo bài viết
+                <button className={cx('primaryBtn')} type="button" disabled={saving} onClick={handleCreateDraft}>
+                    {saving ? 'Đang tạo...' : 'Tạo bài viết'}
                 </button>
             </div>
 
@@ -248,7 +195,7 @@ export default function Blogs() {
                                                         )}
                                                     </div>
                                                     <div>
-                                                        <strong>{post.title}</strong>
+                                                        <strong>{post.title || 'Chưa có tiêu đề'}</strong>
                                                         <span>{post.excerpt || post.summary || post.slug || '-'}</span>
                                                     </div>
                                                 </div>
@@ -274,8 +221,11 @@ export default function Blogs() {
                                                     <button type="button" onClick={() => openDetailModal(post)}>
                                                         Chi tiết
                                                     </button>
-                                                    <button type="button" onClick={() => openEditModal(post)}>
+                                                    <button type="button" onClick={() => openEditPage(post)}>
                                                         Sửa
+                                                    </button>
+                                                    <button type="button" onClick={() => openEditPage(post, true)}>
+                                                        Preview
                                                     </button>
                                                     <button
                                                         className={cx('danger')}
@@ -295,33 +245,12 @@ export default function Blogs() {
                 </div>
             </div>
 
-            {isOpenModal && (
-                <div className={cx('modalOverlay')}>
-                    <div className={cx('modalContent')}>
-                        <div className={cx('modalHeader')}>
-                            <h2>{editingPost ? 'Cập nhật bài viết' : 'Tạo bài viết mới'}</h2>
-                            <button type="button" onClick={closeModal} aria-label="Đóng">
-                                ×
-                            </button>
-                        </div>
-
-                        <PostForm
-                            formData={formData}
-                            saving={saving}
-                            onChange={handleInputChange}
-                            onClose={closeModal}
-                            onSubmit={handleSubmit}
-                        />
-                    </div>
-                </div>
-            )}
-
             {selectedPost && (
                 <div className={cx('modalOverlay')}>
                     <div className={cx('detailModal')}>
                         <div className={cx('modalHeader')}>
                             <div>
-                                <h2>{selectedPost.title}</h2>
+                                <h2>{selectedPost.title || 'Chưa có tiêu đề'}</h2>
                                 <span>{formatDate(selectedPost.updatedAt || selectedPost.createdAt)}</span>
                             </div>
                             <button type="button" onClick={closeDetailModal} aria-label="Đóng">
@@ -369,7 +298,7 @@ export default function Blogs() {
                                     <option value="DRAFT">Draft</option>
                                     <option value="PUBLISHED">Public</option>
                                 </select>
-                                <button type="button" onClick={() => openEditModal(selectedPost)}>
+                                <button type="button" onClick={() => openEditPage(selectedPost)}>
                                     Sửa bài viết
                                 </button>
                             </div>
