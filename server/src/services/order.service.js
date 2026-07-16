@@ -298,14 +298,88 @@ class OrderService {
         return this.toPublicOrder(order);
     }
 
-    async getMyOrders(userId) {
-        const orders = await prisma.order.findMany({
-            where: { userId },
-            orderBy: { createdAt: 'desc' },
-            include: this.orderInclude()
+    async getMyOrders(userId, filters = {}) {
+        const allowedStatuses = ['PENDING', 'CONFIRMED', 'SHIPPING', 'COMPLETED', 'CANCELLED'];
+        const allowedPaymentStatuses = ['UNPAID', 'PAID', 'FAILED', 'REFUNDED'];
+        const page = Math.max(Number.parseInt(filters.page, 10) || 1, 1);
+        const limit = Math.min(Math.max(Number.parseInt(filters.limit, 10) || 10, 1), 50);
+        const status = String(filters.status || '').toUpperCase();
+        const paymentStatus = String(filters.paymentStatus || '').toUpperCase();
+        const keyword = String(filters.keyword || '').trim().replace(/^#/, '').slice(0, 100);
+
+        const baseWhere = { userId };
+
+        if (keyword) {
+            baseWhere.OR = [
+                { publicId: { contains: keyword } },
+                { items: { some: { title: { contains: keyword } } } }
+            ];
+        }
+
+        if (allowedPaymentStatuses.includes(paymentStatus)) {
+            baseWhere.paymentStatus = paymentStatus;
+        }
+
+        if (filters.fromDate || filters.toDate) {
+            baseWhere.createdAt = {};
+
+            if (filters.fromDate) {
+                const fromDate = new Date(`${filters.fromDate}T00:00:00`);
+                if (!Number.isNaN(fromDate.getTime())) baseWhere.createdAt.gte = fromDate;
+            }
+
+            if (filters.toDate) {
+                const toDate = new Date(`${filters.toDate}T00:00:00`);
+                if (!Number.isNaN(toDate.getTime())) {
+                    toDate.setDate(toDate.getDate() + 1);
+                    baseWhere.createdAt.lt = toDate;
+                }
+            }
+
+            if (Object.keys(baseWhere.createdAt).length === 0) delete baseWhere.createdAt;
+        }
+
+        const where = {
+            ...baseWhere,
+            ...(allowedStatuses.includes(status) ? { status } : {})
+        };
+
+        const [orders, total, groupedStatuses] = await Promise.all([
+            prisma.order.findMany({
+                where,
+                skip: (page - 1) * limit,
+                take: limit,
+                orderBy: { createdAt: 'desc' },
+                include: this.orderInclude()
+            }),
+            prisma.order.count({ where }),
+            prisma.order.groupBy({
+                by: ['status'],
+                where: baseWhere,
+                _count: { _all: true }
+            })
+        ]);
+
+        const statusCounts = allowedStatuses.reduce(
+            (counts, currentStatus) => ({ ...counts, [currentStatus]: 0 }),
+            { ALL: 0 }
+        );
+
+        groupedStatuses.forEach((item) => {
+            statusCounts[item.status] = item._count._all;
+            statusCounts.ALL += item._count._all;
         });
 
-        return orders.map((order) => this.toPublicOrder(order));
+        return {
+            orders: orders.map((order) => this.toPublicOrder(order)),
+            pagination: {
+                page,
+                limit,
+                total,
+                totalPages: Math.ceil(total / limit)
+            },
+            statusCounts
+        };
     }
 
     async getOrderById(userId, orderId) {

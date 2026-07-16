@@ -3,6 +3,9 @@
     right: 24px;
     bottom: 24px;
     z-index: 999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     width: 58px;
     height: 58px;
     border: none;
@@ -12,6 +15,10 @@
     font-weight: 700;
     cursor: pointer;
     box-shadow: 0 10px 25px rgba(42, 131, 233, 0.35);
+
+    svg {
+        display: block;
+    }
 }
 
 .popup {
@@ -252,6 +259,9 @@
     gap: 8px;
 
     button:first-child {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
         padding: 5px 9px;
         border: 1px solid rgba(255, 255, 255, 0.4);
         border-radius: 999px;
@@ -262,6 +272,9 @@
     }
 
     button:last-child {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
         border: none;
         background: transparent;
         color: #fff;

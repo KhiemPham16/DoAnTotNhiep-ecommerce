@@ -17,11 +17,15 @@ class OrderController {
 
     async myOrders(req, res, next) {
         try {
-            const orders = await orderService.getMyOrders(req.user.id);
+            const result = await orderService.getMyOrders(req.user.id, req.query);
 
             return res.status(200).json({
                 success: true,
-                data: orders
+                data: result.orders,
+                meta: {
+                    pagination: result.pagination,
+                    statusCounts: result.statusCounts
+                }
             });
         } catch (error) {
             next(error);

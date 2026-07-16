@@ -17,6 +17,9 @@ const updateOrderInState = (orders, orderId, updatedOrder) =>
 export const useOrderStore = create((set, get) => ({
     orders: [],
     selectedOrder: null,
+    myOrdersPagination: { page: 1, limit: 10, total: 0, totalPages: 0 },
+    myOrderStatusCounts: {},
+    myOrderParams: {},
 
     loading: false,
     creating: false,
@@ -84,14 +87,17 @@ export const useOrderStore = create((set, get) => ({
         }
     },
 
-    fetchMyOrders: async () => {
+    fetchMyOrders: async (params = get().myOrderParams) => {
         try {
             set({ loading: true });
 
-            const data = await orderService.getMyOrders();
+            const data = await orderService.getMyOrders(params);
 
             set({
-                orders: data.data || []
+                orders: data.data || [],
+                myOrdersPagination: data.meta?.pagination || { page: 1, limit: 10, total: 0, totalPages: 0 },
+                myOrderStatusCounts: data.meta?.statusCounts || {},
+                myOrderParams: params
             });
 
             return true;

@@ -47,6 +47,9 @@
 
 .primaryBtn,
 .dangerBtn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     border: 1px solid rgba(0, 0, 0, 0.12);
     border-radius: 8px;
     padding: 10px 12px;
@@ -187,6 +190,9 @@
 
 .rowActions button,
 .modalHeader button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     border: 1px solid rgba(0, 0, 0, 0.12);
     border-radius: 8px;
     background: #fff;

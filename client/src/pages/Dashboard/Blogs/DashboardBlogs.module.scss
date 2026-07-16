@@ -202,6 +202,9 @@
 .rowActions button,
 .modalHeader button,
 .modalActions button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     border: 1px solid rgba(0, 0, 0, 0.12);
     border-radius: 8px;
     background: #fff;
@@ -399,6 +402,9 @@
 }
 
 .editorActions button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     border: 1px solid rgba(0, 0, 0, 0.12);
     border-radius: 8px;
     background: #fff;
