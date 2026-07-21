@@ -1,5 +1,5 @@
 -- AlterTable
-ALTER TABLE `order` ADD COLUMN `approvedAt` DATETIME(3) NULL,
+ALTER TABLE `Order` ADD COLUMN `approvedAt` DATETIME(3) NULL,
     ADD COLUMN `assignedAt` DATETIME(3) NULL,
     ADD COLUMN `assignedToId` INTEGER NULL;
 

@@ -1,2 +1,2 @@
 -- AlterTable
-ALTER TABLE `product` ADD COLUMN `tagline` VARCHAR(255) NULL;
+ALTER TABLE `Product` ADD COLUMN `tagline` VARCHAR(255) NULL;
