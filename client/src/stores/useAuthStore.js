@@ -31,18 +31,26 @@ export const useAuthStore = create(
             },
 
             register: async (fullName, email, phone, password) => {
+                let registrationResult;
+
                 try {
                     set({ loading: true });
 
                     await authService.register(fullName, email, phone, password);
+                    registrationResult = { success: true };
 
                     toast.success('Đăng ký thành công! Vui lòng kiểm tra email.');
                 } catch (error) {
                     console.error(error);
-                    toast.error(error?.response?.data?.message || 'Đăng ký không thành công');
+                    registrationResult = {
+                        success: false,
+                        message: error?.response?.data?.message || 'Đăng ký không thành công'
+                    };
                 } finally {
                     set({ loading: false });
                 }
+
+                return registrationResult;
             },
 
             login: async (email, password) => {

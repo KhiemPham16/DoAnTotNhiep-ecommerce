@@ -38,6 +38,7 @@ CREATE TABLE `Session` (
 
     UNIQUE INDEX `Session_publicId_key`(`publicId`),
     UNIQUE INDEX `Session_refreshToken_key`(`refreshToken`),
+    INDEX `Session_userId_fkey`(`userId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -85,6 +86,7 @@ CREATE TABLE `Product` (
     `author` VARCHAR(191) NOT NULL,
     `publisher` VARCHAR(191) NULL,
     `isbn` VARCHAR(191) NULL,
+    `tagline` VARCHAR(255) NULL,
     `description` TEXT NULL,
     `thumbnail` VARCHAR(191) NULL,
     `images` JSON NULL,
@@ -102,6 +104,7 @@ CREATE TABLE `Product` (
 
     UNIQUE INDEX `Product_publicId_key`(`publicId`),
     UNIQUE INDEX `Product_slug_key`(`slug`),
+    INDEX `Product_categoryId_fkey`(`categoryId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -118,6 +121,8 @@ CREATE TABLE `Review` (
     `updatedAt` DATETIME(3) NOT NULL,
 
     UNIQUE INDEX `Review_publicId_key`(`publicId`),
+    INDEX `Review_orderId_fkey`(`orderId`),
+    INDEX `Review_productId_fkey`(`productId`),
     UNIQUE INDEX `Review_userId_productId_orderId_key`(`userId`, `productId`, `orderId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -154,17 +159,25 @@ CREATE TABLE `Order` (
     `couponId` INTEGER NULL,
     `paymentMethodId` INTEGER NOT NULL,
     `approvedById` INTEGER NULL,
+    `assignedToId` INTEGER NULL,
     `status` ENUM('PENDING', 'CONFIRMED', 'SHIPPING', 'COMPLETED', 'CANCELLED') NOT NULL DEFAULT 'PENDING',
     `paymentStatus` ENUM('UNPAID', 'PAID', 'FAILED', 'REFUNDED') NOT NULL DEFAULT 'UNPAID',
-    `discountAmount` DECIMAL(12, 2) NOT NULL DEFAULT 0,
+    `discountAmount` DECIMAL(12, 2) NOT NULL DEFAULT 0.00,
     `totalAmount` DECIMAL(12, 2) NOT NULL,
     `finalAmount` DECIMAL(12, 2) NOT NULL,
     `note` TEXT NULL,
+    `assignedAt` DATETIME(3) NULL,
+    `approvedAt` DATETIME(3) NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
 
     UNIQUE INDEX `Order_publicId_key`(`publicId`),
     INDEX `Order_approvedById_idx`(`approvedById`),
+    INDEX `Order_assignedToId_idx`(`assignedToId`),
+    INDEX `Order_addressId_fkey`(`addressId`),
+    INDEX `Order_couponId_fkey`(`couponId`),
+    INDEX `Order_paymentMethodId_fkey`(`paymentMethodId`),
+    INDEX `Order_userId_fkey`(`userId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -180,6 +193,8 @@ CREATE TABLE `OrderItem` (
     `subtotal` DECIMAL(12, 2) NOT NULL,
 
     UNIQUE INDEX `OrderItem_publicId_key`(`publicId`),
+    INDEX `OrderItem_orderId_fkey`(`orderId`),
+    INDEX `OrderItem_productId_fkey`(`productId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -205,13 +220,14 @@ CREATE TABLE `Post` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `publicId` VARCHAR(191) NOT NULL,
     `slug` VARCHAR(191) NOT NULL,
-    `title` VARCHAR(191) NOT NULL,
-    `dek` TEXT NOT NULL,
-    `excerpt` TEXT NOT NULL,
-    `bodyHtml` MEDIUMTEXT NOT NULL,
-    `coverImageUrl` VARCHAR(2048) NOT NULL,
-    `readMinutes` INTEGER NOT NULL,
+    `title` VARCHAR(191) NOT NULL DEFAULT '',
+    `dek` TEXT NULL,
+    `excerpt` TEXT NULL,
+    `bodyHtml` MEDIUMTEXT NULL,
+    `coverImageUrl` VARCHAR(2048) NULL,
+    `readMinutes` INTEGER NOT NULL DEFAULT 1,
     `featured` BOOLEAN NOT NULL DEFAULT false,
+    `viewCount` INTEGER NOT NULL DEFAULT 0,
     `publishedAt` DATETIME(3) NULL,
     `status` ENUM('DRAFT', 'PUBLISHED') NOT NULL DEFAULT 'DRAFT',
     `authorId` INTEGER NOT NULL,
@@ -258,28 +274,31 @@ ALTER TABLE `Address` ADD CONSTRAINT `Address_userId_fkey` FOREIGN KEY (`userId`
 ALTER TABLE `Product` ADD CONSTRAINT `Product_categoryId_fkey` FOREIGN KEY (`categoryId`) REFERENCES `Category`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `Review` ADD CONSTRAINT `Review_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `User`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE `Review` ADD CONSTRAINT `Review_orderId_fkey` FOREIGN KEY (`orderId`) REFERENCES `Order`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `Review` ADD CONSTRAINT `Review_productId_fkey` FOREIGN KEY (`productId`) REFERENCES `Product`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `Review` ADD CONSTRAINT `Review_orderId_fkey` FOREIGN KEY (`orderId`) REFERENCES `Order`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE `Review` ADD CONSTRAINT `Review_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `User`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `Order` ADD CONSTRAINT `Order_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `User`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE `Order` ADD CONSTRAINT `Order_addressId_fkey` FOREIGN KEY (`addressId`) REFERENCES `Address`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `Order` ADD CONSTRAINT `Order_approvedById_fkey` FOREIGN KEY (`approvedById`) REFERENCES `User`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `Order` ADD CONSTRAINT `Order_addressId_fkey` FOREIGN KEY (`addressId`) REFERENCES `Address`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE `Order` ADD CONSTRAINT `Order_assignedToId_fkey` FOREIGN KEY (`assignedToId`) REFERENCES `User`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `Order` ADD CONSTRAINT `Order_couponId_fkey` FOREIGN KEY (`couponId`) REFERENCES `Coupon`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `Order` ADD CONSTRAINT `Order_paymentMethodId_fkey` FOREIGN KEY (`paymentMethodId`) REFERENCES `PaymentMethod`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `Order` ADD CONSTRAINT `Order_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `User`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `OrderItem` ADD CONSTRAINT `OrderItem_orderId_fkey` FOREIGN KEY (`orderId`) REFERENCES `Order`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
